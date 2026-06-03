@@ -96,15 +96,12 @@ GitHub / Google OAuth 可选；未配置时登录页会自动隐藏对应按钮�
 
 ### 3. 对齐数据库迁移
 
-项目使用 Prisma migrations 管理结构。新克隆环境请执行：
+本地开发环境已内置启动引导：`npm run dev` 会自动创建 `.env`、同步 SQLite 表结构，并写入默认测试账号。
+
+如果你希望手动对齐数据库，也可以执行：
 
 ```bash
 npx prisma migrate deploy
-```
-
-如果你需要本地测试账号，可运行：
-
-```bash
 npx prisma db seed
 ```
 

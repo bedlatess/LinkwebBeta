@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 2222",
+    "bootstrap": "node scripts/bootstrap-dev.mjs",
+    "dev": "node scripts/bootstrap-dev.mjs && next dev -p 2222",
     "build": "next build",
-    "start": "next start -p 2222",
+    "start": "node scripts/bootstrap-dev.mjs && next start -p 2222",
     "lint": "eslint",
     "db:seed": "npx tsx prisma/seed.ts"
   },

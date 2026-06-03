@@ -20,23 +20,39 @@ async function main() {
 
   const existing = await prisma.user.findUnique({ where: { email } });
 
+  const user = existing
+    ? await prisma.user.update({
+        where: { email },
+        data: { passwordHash, name: "Admin", username: "admin" },
+      })
+    : await prisma.user.create({
+        data: {
+          email,
+          name: "Admin",
+          username: "admin",
+          passwordHash,
+        },
+      });
+
   if (existing) {
     console.log(`⚠️  Admin user already exists (${email}). Updating password...`);
-    await prisma.user.update({
-      where: { email },
-      data: { passwordHash, name: "Admin", username: "admin" },
-    });
   } else {
-    await prisma.user.create({
-      data: {
-        email,
-        name: "Admin",
-        username: "admin",
-        passwordHash,
-      },
-    });
     console.log(`✅ Created admin user: ${email} / ${password}`);
   }
+
+  await prisma.themeConfig.upsert({
+    where: { userId: user.id },
+    update: {},
+    create: {
+      userId: user.id,
+      bgType: "gradient",
+      bgValue: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      bgBlur: 12,
+      buttonStyle: "rounded",
+    },
+  });
+
+  console.log("✅ Admin theme config is ready.");
 }
 
 main()

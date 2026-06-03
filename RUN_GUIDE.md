@@ -18,6 +18,8 @@ npm run dev
 
 访问 **http://localhost:2222** 即可看到首页。
 
+`npm run dev` 会自动准备本地 SQLite 数据库并写入测试账号：`admin@linkweb.local / admin123`。
+
 ---
 
 ## 方式一：本地开发环境
@@ -40,11 +42,7 @@ cp .env.example .env
 # 3. 安装依赖
 npm install
 
-# 4. 初始化数据库 + 种子数据
-npx prisma migrate dev --name init
-npx prisma db seed
-
-# 5. 启动开发服务器
+# 4. 启动开发服务器（会自动初始化数据库 + 种子数据）
 npm run dev
 # → 访问 http://localhost:2222
 ```
