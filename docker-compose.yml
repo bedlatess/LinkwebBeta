@@ -5,7 +5,7 @@
 # ║    1. cp .env.example .env                                       ║
 # ║    2. Fill in OAuth credentials + NEXTAUTH_SECRET                ║
 # ║    3. docker compose up -d --build                               ║
-# ║    4. Visit http://localhost:3010                                ║
+# ║    4. Visit http://localhost:2222                                ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
 version: "3.8"
@@ -17,14 +17,14 @@ services:
       dockerfile: Dockerfile
     container_name: linkweb
     ports:
-      - "${PORT:-3010}:3000"
+      - "${PORT:-2222}:3000"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_URL=file:/app/data/linkweb.db
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3010}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:2222}
     volumes:
       # Persist SQLite database file
       - linkweb-data:/app/data

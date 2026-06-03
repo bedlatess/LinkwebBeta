@@ -122,7 +122,7 @@ curl -I https://links.yourdomain.com   # Check for HTTP 200
 ```caddyfile
 # Caddyfile — Simplest production reverse proxy
 links.yourdomain.com {
-    reverse_proxy localhost:3000
+    reverse_proxy localhost:2222
 
     header {
         Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"

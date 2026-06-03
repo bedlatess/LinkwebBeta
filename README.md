@@ -82,7 +82,7 @@ cp .env.example .env
 
 ```env
 DATABASE_URL="file:./dev.db"
-NEXTAUTH_URL="http://localhost:3010"
+NEXTAUTH_URL="http://localhost:2222"
 NEXTAUTH_SECRET="replace-with-a-secure-random-secret"
 ```
 
@@ -123,7 +123,7 @@ npm run dev
 访问：
 
 ```text
-http://localhost:3010
+http://localhost:2222
 ```
 
 ## 🐳 生产部署
@@ -131,7 +131,7 @@ http://localhost:3010
 Linkweb 已内置生产部署基础设施：
 
 - `Dockerfile`：多阶段构建，输出 Next.js standalone。
-- `docker-compose.yml`：支持通过 `PORT` 环境变量映射端口，默认宿主机 `3010`。
+- `docker-compose.yml`：支持通过 `PORT` 环境变量映射端口，默认宿主机 `2222`。
 - `linkweb.service`：Systemd 服务模板，使用 `www-data` 低权限用户运行。
 - `nginx-linkweb.conf`：反向代理与 HTTPS 示例配置。
 
@@ -146,7 +146,8 @@ docker compose exec linkweb npx prisma db seed
 默认映射：
 
 ```text
-http://localhost:3010
+http://localhost:2222
+http://your-server-ip:2222
 ```
 
 也可以通过 `.env` 或 shell 环境变量指定端口：
@@ -154,6 +155,8 @@ http://localhost:3010
 ```bash
 PORT=8080 docker compose up -d --build
 ```
+
+💡 **NPM 反代小贴士**：若使用 Nginx Proxy Manager 管理外部 80/443 域名网关，只需在 NPM 后台新建 Proxy Host，将 `Domain Names` 填入你的漂亮域名，`Forward Name/IP` 填入 `127.0.0.1`，`Forward Port` 稳稳地填入 `2222` 即可。用户访问域名时将完全隐去端口尾巴。
 
 ## 📁 项目结构
 

@@ -7,7 +7,7 @@ set -euo pipefail
 
 PROJECT_DIR="/opt/linkweb"
 SERVICE_NAME="linkweb.service"
-PORT=3010
+PORT=2222
 
 echo "═══════════════════════════════════════════════════════════════"
 echo "  LinkWeb Deployment"
@@ -49,6 +49,7 @@ WorkingDirectory=/opt/linkweb
 ExecStart=/usr/bin/npm start
 Restart=always
 RestartSec=5
+Environment=PORT=2222
 EnvironmentFile=/opt/linkweb/.env
 StandardOutput=append:/var/log/linkweb.log
 StandardError=append:/var/log/linkweb.log

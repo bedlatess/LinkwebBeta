@@ -2,7 +2,7 @@
 
 > **项目**: LinkWeb v2.0 — 现代化自托管个人链接聚合平台  
 > **技术栈**: Next.js 16 · TypeScript · TailwindCSS v4 · Prisma 6 · NextAuth v5  
-> **默认端口**: `3010`
+> **默认端口**: `2222`
 
 ---
 
@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-访问 **http://localhost:3010** 即可看到首页。
+访问 **http://localhost:2222** 即可看到首页。
 
 ---
 
@@ -46,18 +46,18 @@ npx prisma db seed
 
 # 5. 启动开发服务器
 npm run dev
-# → 访问 http://localhost:3010
+# → 访问 http://localhost:2222
 ```
 
 ### 测试账号
 
 | 字段 | 值 |
 |------|-----|
-| 登录页面 | http://localhost:3010/auth/signin |
+| 登录页面 | http://localhost:2222/auth/signin |
 | 邮箱 | `admin@linkweb.local` |
 | 密码 | `admin123` |
 | 用户名 | `admin` |
-| 公开页面 | http://localhost:3010/admin |
+| 公开页面 | http://localhost:2222/admin |
 
 ### 验证点击日志（Prisma Studio）
 
@@ -70,7 +70,7 @@ npx prisma studio
 ```
 
 点击日志收集流程：
-1. 访问公开页面 `http://localhost:3010/admin`
+1. 访问公开页面 `http://localhost:2222/admin`
 2. 点击任意链接 → 客户端自动 `POST /api/visit`
 3. 在 Prisma Studio 中 `VisitLog` 表可见新增记录
 
@@ -106,7 +106,7 @@ docker compose exec linkweb npx prisma migrate deploy
 docker compose exec linkweb npx prisma db seed
 
 # 5. 验证
-curl -I http://localhost:3010
+curl -I http://localhost:2222
 # → HTTP/1.1 200 OK
 ```
 
@@ -115,7 +115,7 @@ curl -I http://localhost:3010
 | 项目 | 值 |
 |------|-----|
 | 容器名 | `linkweb` |
-| 端口映射 | `3010:3010` |
+| 端口映射 | `${PORT:-2222}:3000` |
 | 数据库持久化卷 | `linkweb-data:/app/data` |
 | 上传文件持久化卷 | `linkweb-uploads:/app/public/uploads` |
 | 基础镜像 | `node:20-alpine` (~130MB 基础) |
@@ -149,7 +149,7 @@ docker compose down -v
 ### 1. 登录后台
 
 ```
-http://localhost:3010/auth/signin
+http://localhost:2222/auth/signin
 → 输入 admin@linkweb.local / admin123
 → 登录成功后自动跳转到 /dashboard/links
 ```
@@ -187,7 +187,7 @@ http://localhost:3010/auth/signin
 ### 5. 查看公开页面
 
 ```
-http://localhost:3010/admin
+http://localhost:2222/admin
 → 显示你的个性化链接聚合页
 → 主题、链接列表、排序全部同步
 → 点击任意链接 → 后台记录点击日志
@@ -208,7 +208,7 @@ npx prisma studio
 | 变量 | 必填 | 说明 |
 |------|------|------|
 | `DATABASE_URL` | ✅ | SQLite: `file:./dev.db` (本地) / `file:/app/data/linkweb.db` (Docker) |
-| `NEXTAUTH_URL` | ✅ | `http://localhost:3010` (本地) / 生产域名 |
+| `NEXTAUTH_URL` | ✅ | `http://localhost:2222` (本地) / 生产域名 |
 | `NEXTAUTH_SECRET` | ✅ | `openssl rand -base64 32` 生成 |
 | `GITHUB_CLIENT_ID` | ❌ | GitHub OAuth App Client ID |
 | `GITHUB_SECRET` | ❌ | GitHub OAuth App Client Secret |
@@ -247,7 +247,7 @@ src/
 
 ## 常见问题
 
-**Q: 端口 3010 被占用怎么办？**
+**Q: 端口 2222 被占用怎么办？**
 A: 修改 `.env` 中的 `NEXTAUTH_URL` 和 `package.json` 中的 `-p` 参数为其他端口。
 
 **Q: 如何重置管理员密码？**

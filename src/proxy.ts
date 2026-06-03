@@ -29,7 +29,7 @@ export default auth(async (req) => {
   const host = req.headers.get("host") ?? "";
   const mainHost = process.env.NEXTAUTH_URL
     ? new URL(process.env.NEXTAUTH_URL).host
-    : "localhost:3010";
+    : "localhost:2222";
 
   // ═══════════════════════════════════════════════════════════════
   //  Custom Domain Rewrite (White-label)
