@@ -27,6 +27,7 @@ export async function GET() {
       bgBlur: 0,
       buttonStyle: "rounded",
       fontFamily: null,
+      customCSS: null,
       tipEnabled: false,
       tipTitle: null,
       paypalEmail: null,
@@ -52,6 +53,7 @@ export async function PUT(request: Request) {
   if (body.bgBlur !== undefined) allowedFields.bgBlur = body.bgBlur;
   if (body.buttonStyle !== undefined) allowedFields.buttonStyle = body.buttonStyle;
   if (body.fontFamily !== undefined) allowedFields.fontFamily = body.fontFamily;
+  if (body.customCSS !== undefined) allowedFields.customCSS = body.customCSS;
   // Tip fields
   if (body.tipEnabled !== undefined) allowedFields.tipEnabled = body.tipEnabled;
   if (body.tipTitle !== undefined) allowedFields.tipTitle = body.tipTitle;

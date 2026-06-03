@@ -17,11 +17,12 @@ services:
       dockerfile: Dockerfile
     container_name: linkweb
     ports:
-      - "3010:3010"
+      - "${PORT:-3010}:3000"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
+      - PORT=3000
       - DATABASE_URL=file:/app/data/linkweb.db
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3010}
     volumes:

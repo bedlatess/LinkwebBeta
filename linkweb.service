@@ -9,7 +9,8 @@ WorkingDirectory=/opt/linkweb
 ExecStart=/usr/bin/node /opt/linkweb/.next/standalone/server.js
 Restart=always
 RestartSec=5
-User=root
+User=www-data
+Group=www-data
 Environment=NODE_ENV=production
 Environment=PORT=3010
 Environment=HOSTNAME=0.0.0.0

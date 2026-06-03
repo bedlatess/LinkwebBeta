@@ -7,7 +7,7 @@
  * mode="edit"   → PATCH /api/links/[id]
  */
 
-import { useState, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useDashboardStore } from "@/stores/dashboard-store";
 import { X, Loader2, Check } from "lucide-react";
 
@@ -20,14 +20,29 @@ export function LinkEditor({ mode, onClose }: Props) {
   const { addLink, updateLink, editingLinkId, links, setEditingLinkId } =
     useDashboardStore();
 
-  const existingLink = mode === "edit" ? links.find((l) => l.id === editingLinkId) : null;
+  const activeLink = useMemo(
+    () =>
+      mode === "edit"
+        ? links.find((link) => link.id === editingLinkId) ?? null
+        : null,
+    [editingLinkId, links, mode]
+  );
 
-  const [title, setTitle] = useState(existingLink?.title ?? "");
-  const [url, setUrl] = useState(existingLink?.url ?? "");
-  const [iconName, setIconName] = useState(existingLink?.iconName ?? "");
-  const [isVisible, setIsVisible] = useState(existingLink?.isVisible ?? true);
+  const [title, setTitle] = useState(() => activeLink?.title ?? "");
+  const [url, setUrl] = useState(() => activeLink?.url ?? "");
+  const [iconName, setIconName] = useState(() => activeLink?.iconName ?? "");
+  const [isVisible, setIsVisible] = useState(
+    () => activeLink?.isVisible ?? true
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const handleClose = useCallback(() => {
+    if (mode === "edit") {
+      setEditingLinkId(null);
+    }
+    onClose();
+  }, [mode, onClose, setEditingLinkId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,7 +75,7 @@ export function LinkEditor({ mode, onClose }: Props) {
 
         const newLink = await res.json();
         addLink(newLink);
-        onClose();
+        handleClose();
       } else {
         if (!editingLinkId) return;
 
@@ -86,8 +101,7 @@ export function LinkEditor({ mode, onClose }: Props) {
           iconName: iconName.trim() || null,
           isVisible,
         });
-        setEditingLinkId(null);
-        onClose();
+        handleClose();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "操作失败");
@@ -107,7 +121,7 @@ export function LinkEditor({ mode, onClose }: Props) {
         </h3>
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleClose}
           className="rounded-lg p-1 text-white/30 transition-colors hover:bg-white/[0.05] hover:text-white/60"
         >
           <X className="h-4 w-4" />
@@ -185,7 +199,7 @@ export function LinkEditor({ mode, onClose }: Props) {
         <div className="flex gap-2 pt-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex-1 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-sm text-white/50 backdrop-blur-sm transition-colors hover:bg-white/[0.05] hover:text-white/70"
           >
             取消

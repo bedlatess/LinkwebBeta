@@ -38,8 +38,15 @@ import {
 import type { LinkItem } from "@/stores/dashboard-store";
 
 export function LinkList() {
-  const { links, reorderLinks, removeLink, updateLink } = useDashboardStore();
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const {
+    links,
+    setLinks,
+    reorderLinks,
+    removeLink,
+    updateLink,
+    editingLinkId,
+    setEditingLinkId,
+  } = useDashboardStore();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -57,6 +64,8 @@ export function LinkList() {
       const newIndex = links.findIndex((l) => l.id === over.id);
       if (oldIndex === -1 || newIndex === -1) return;
 
+      const originalLinks = [...links];
+
       // Optimistic update
       reorderLinks(oldIndex, newIndex);
 
@@ -68,18 +77,22 @@ export function LinkList() {
 
       setSaving(true);
       try {
-        await fetch("/api/links/reorder", {
+        const res = await fetch("/api/links/reorder", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ items }),
         });
+        if (!res.ok) {
+          throw new Error("Failed to persist link order");
+        }
       } catch {
-        // TODO: rollback on failure
+        setLinks(originalLinks);
+        alert("网络同步失败，排序已回滚，请刷新重试");
       } finally {
         setSaving(false);
       }
     },
-    [links, reorderLinks]
+    [links, reorderLinks, setLinks]
   );
 
   async function handleDelete(id: string) {
@@ -139,7 +152,7 @@ export function LinkList() {
               <SortableLinkItem
                 key={link.id}
                 link={link}
-                onEdit={() => setEditingId(link.id)}
+                onEdit={() => setEditingLinkId(link.id)}
                 onDelete={() => handleDelete(link.id)}
                 onToggleVisibility={() =>
                   toggleVisibility(link.id, link.isVisible)
@@ -152,11 +165,12 @@ export function LinkList() {
       </DndContext>
 
       {/* Inline editor */}
-      {editingId && (
+      {editingLinkId && (
         <div className="mt-3">
           <LinkEditor
+            key={editingLinkId}
             mode="edit"
-            onClose={() => setEditingId(null)}
+            onClose={() => setEditingLinkId(null)}
           />
         </div>
       )}

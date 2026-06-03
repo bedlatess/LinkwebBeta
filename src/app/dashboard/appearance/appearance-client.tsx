@@ -20,7 +20,9 @@ import {
   Check,
   Loader2,
   Palette,
-  Coffee,
+  Code2,
+  Heart,
+  Type,
 } from "lucide-react";
 
 interface ThemeConfigFull {
@@ -103,6 +105,13 @@ const PRESETS: {
   },
 ];
 
+const FONT_OPTIONS = [
+  { value: "", label: "系统默认" },
+  { value: "serif", label: "Serif" },
+  { value: "monospace", label: "Mono" },
+  { value: "sans-serif", label: "Sans-serif" },
+];
+
 export function AppearanceClient({ initialConfig }: Props) {
   const { theme, setTheme } = useDashboardStore();
   const [activePreset, setActivePreset] = useState<string | null>(null);
@@ -117,13 +126,27 @@ export function AppearanceClient({ initialConfig }: Props) {
       bgBlur: initialConfig.bgBlur,
       buttonStyle: initialConfig.buttonStyle,
       fontFamily: initialConfig.fontFamily,
+      customCSS: initialConfig.customCSS,
       tipEnabled: initialConfig.tipEnabled,
       tipTitle: initialConfig.tipTitle,
       paypalEmail: initialConfig.paypalEmail,
       customTipUrl: initialConfig.customTipUrl,
       cryptoAddress: initialConfig.cryptoAddress,
     });
-  }, []);
+  }, [
+    initialConfig.bgBlur,
+    initialConfig.bgType,
+    initialConfig.bgValue,
+    initialConfig.buttonStyle,
+    initialConfig.customCSS,
+    initialConfig.cryptoAddress,
+    initialConfig.customTipUrl,
+    initialConfig.fontFamily,
+    initialConfig.paypalEmail,
+    initialConfig.tipEnabled,
+    initialConfig.tipTitle,
+    setTheme,
+  ]);
 
   const applyPreset = useCallback(
     (preset: (typeof PRESETS)[0]) => {
@@ -301,11 +324,62 @@ export function AppearanceClient({ initialConfig }: Props) {
           </div>
         </div>
 
+        {/* ─── Advanced style controls ─── */}
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white/80">
+            <Code2 className="h-4 w-4 text-cyan-400" />
+            字体与高级 CSS
+          </h3>
+
+          <div className="space-y-5">
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-xs font-medium text-white/50">
+                <Type className="h-3.5 w-3.5 text-white/30" />
+                自定义字体
+              </label>
+              <select
+                value={theme.fontFamily ?? ""}
+                onChange={(e) =>
+                  setTheme({ fontFamily: e.target.value || null })
+                }
+                className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white/70 backdrop-blur-sm transition-all focus:border-cyan-500/40 focus:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-cyan-500/15"
+              >
+                {FONT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-xs font-medium text-white/50">
+                  全局高级 CSS
+                </label>
+                <span className="text-[10px] uppercase tracking-wider text-white/20">
+                  Public page only
+                </span>
+              </div>
+              <textarea
+                value={theme.customCSS ?? ""}
+                onChange={(e) =>
+                  setTheme({ customCSS: e.target.value || null })
+                }
+                rows={7}
+                spellCheck={false}
+                placeholder=".linkweb-public a:hover { transform: translateY(-2px) scale(1.01); }"
+                className="min-h-[160px] w-full resize-y rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 font-mono text-xs leading-relaxed text-white/70 placeholder:text-white/15 backdrop-blur-sm transition-all focus:border-cyan-500/40 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-cyan-500/15"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* ─── Tip / Donation Config ─── */}
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-sm">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-white/80">
-            <Coffee className="h-4 w-4 text-amber-400" />
-            打赏组件配置
+            <Heart className="h-4 w-4 text-rose-400" />
+            打赏与赞助设置
           </h3>
 
           <div className="space-y-4">
@@ -352,9 +426,9 @@ export function AppearanceClient({ initialConfig }: Props) {
                 {/* Custom tip URL */}
                 <div>
                   <label className="mb-1 block text-xs font-medium text-white/40">
-                    第三方打赏链接{" "}
+                    自定义赞助链接{" "}
                     <span className="text-white/20">
-                      (Ko-fi / 爱发电 / BuyMeACoffee)
+                      (BuyMeACoffee / Ko-fi / 爱发电)
                     </span>
                   </label>
                   <input
@@ -365,7 +439,7 @@ export function AppearanceClient({ initialConfig }: Props) {
                         customTipUrl: e.target.value || null,
                       })
                     }
-                    placeholder="https://ko-fi.com/yourname"
+                    placeholder="https://buymeacoffee.com/yourname"
                     className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-white/15 backdrop-blur-sm transition-all focus:border-amber-500/40 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-amber-500/15"
                   />
                 </div>
@@ -391,8 +465,8 @@ export function AppearanceClient({ initialConfig }: Props) {
                 {/* Crypto address */}
                 <div>
                   <label className="mb-1 block text-xs font-medium text-white/40">
-                    加密货币地址{" "}
-                    <span className="text-white/20">(ETH/BTC/SOL)</span>
+                    加密货币收款地址{" "}
+                    <span className="text-white/20">(BTC/ETH/SOL)</span>
                   </label>
                   <input
                     type="text"
@@ -456,6 +530,9 @@ function AppearancePhonePreview() {
   const previewStyle: React.CSSProperties = {};
   if (theme.bgType === "color" || theme.bgType === "gradient") {
     previewStyle.background = theme.bgValue;
+  }
+  if (theme.fontFamily) {
+    previewStyle.fontFamily = theme.fontFamily;
   }
 
   const buttonRadiusClass =

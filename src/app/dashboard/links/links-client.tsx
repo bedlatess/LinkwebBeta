@@ -9,7 +9,7 @@
  *   - Live phone preview of the public link page
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useDashboardStore, type LinkItem } from "@/stores/dashboard-store";
 import { LinkEditor } from "./link-editor";
 import { LinkList } from "./link-list";

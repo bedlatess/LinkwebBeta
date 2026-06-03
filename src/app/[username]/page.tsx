@@ -85,30 +85,38 @@ export default async function PublicPage({ params }: Props) {
     cryptoAddress: null,
   };
 
+  const customCSS = theme.customCSS?.trim();
+
   return (
-    <PublicLinkPage
-      username={user.username ?? username}
-      displayName={user.name ?? username}
-      bio={user.bio}
-      avatarUrl={user.image}
-      links={user.links.map((l) => ({
-        id: l.id,
-        title: l.title,
-        url: l.url,
-        iconName: l.iconName,
-      }))}
-      theme={{
-        bgType: theme.bgType,
-        bgValue: theme.bgValue,
-        bgBlur: theme.bgBlur,
-        buttonStyle: theme.buttonStyle,
-        fontFamily: theme.fontFamily,
-        tipEnabled: theme.tipEnabled,
-        tipTitle: theme.tipTitle,
-        paypalEmail: theme.paypalEmail,
-        customTipUrl: theme.customTipUrl,
-        cryptoAddress: theme.cryptoAddress,
-      }}
-    />
+    <>
+      {customCSS && (
+        <style dangerouslySetInnerHTML={{ __html: customCSS }} />
+      )}
+      <PublicLinkPage
+        username={user.username ?? username}
+        displayName={user.name ?? username}
+        bio={user.bio}
+        avatarUrl={user.image}
+        links={user.links.map((l) => ({
+          id: l.id,
+          title: l.title,
+          url: l.url,
+          iconName: l.iconName,
+        }))}
+        theme={{
+          bgType: theme.bgType,
+          bgValue: theme.bgValue,
+          bgBlur: theme.bgBlur,
+          buttonStyle: theme.buttonStyle,
+          fontFamily: theme.fontFamily,
+          customCSS: theme.customCSS,
+          tipEnabled: theme.tipEnabled,
+          tipTitle: theme.tipTitle,
+          paypalEmail: theme.paypalEmail,
+          customTipUrl: theme.customTipUrl,
+          cryptoAddress: theme.cryptoAddress,
+        }}
+      />
+    </>
   );
 }

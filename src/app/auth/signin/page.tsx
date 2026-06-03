@@ -5,6 +5,11 @@ import { SignInContent } from "./signin-content";
  * LinkWeb Sign-In Page — Wrapped in Suspense for useSearchParams()
  */
 export default function SignInPage() {
+  const oauthProviders = {
+    github: Boolean(process.env.GITHUB_CLIENT_ID),
+    google: Boolean(process.env.GOOGLE_CLIENT_ID),
+  };
+
   return (
     <Suspense
       fallback={
@@ -13,7 +18,7 @@ export default function SignInPage() {
         </div>
       }
     >
-      <SignInContent />
+      <SignInContent oauthProviders={oauthProviders} />
     </Suspense>
   );
 }

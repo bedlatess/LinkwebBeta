@@ -10,12 +10,74 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createHash } from "crypto";
 
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 60;
+
+type RateLimitEntry = {
+  count: number;
+  windowStart: number;
+};
+
+const globalForVisitRateLimit = globalThis as typeof globalThis & {
+  linkwebVisitRateLimit?: Map<string, RateLimitEntry>;
+  linkwebVisitRateLimitLastCleanup?: number;
+};
+
+const rateLimitStore =
+  globalForVisitRateLimit.linkwebVisitRateLimit ??
+  new Map<string, RateLimitEntry>();
+
+globalForVisitRateLimit.linkwebVisitRateLimit = rateLimitStore;
+
+function hashIp(ip: string) {
+  const salt = process.env.NEXTAUTH_SECRET ?? "";
+  return createHash("sha256").update(`${ip}:${salt}`).digest("hex").slice(0, 32);
+}
+
+function isRateLimited(ipHash: string) {
+  const now = Date.now();
+
+  if (
+    !globalForVisitRateLimit.linkwebVisitRateLimitLastCleanup ||
+    now - globalForVisitRateLimit.linkwebVisitRateLimitLastCleanup >=
+      RATE_LIMIT_WINDOW_MS
+  ) {
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {
+        rateLimitStore.delete(key);
+      }
+    }
+    globalForVisitRateLimit.linkwebVisitRateLimitLastCleanup = now;
+  }
+
+  const current = rateLimitStore.get(ipHash);
+
+  if (!current || now - current.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    rateLimitStore.set(ipHash, { count: 1, windowStart: now });
+    return false;
+  }
+
+  current.count += 1;
+  return current.count > RATE_LIMIT_MAX_REQUESTS;
+}
+
 export async function POST(request: Request) {
   const body = await request.json();
   const { linkId } = body;
 
   if (!linkId) {
     return NextResponse.json({ error: "linkId is required" }, { status: 400 });
+  }
+
+  // Privacy-preserving: hash the salted IP before touching SQLite.
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    "0.0.0.0";
+  const ipHash = hashIp(ip);
+
+  if (isRateLimited(ipHash)) {
+    return NextResponse.json({ error: "Too Many Requests" }, { status: 429 });
   }
 
   // Verify the link exists
@@ -27,13 +89,6 @@ export async function POST(request: Request) {
   if (!link) {
     return NextResponse.json({ error: "Link not found" }, { status: 404 });
   }
-
-  // Privacy-preserving: hash the IP for dedup without storing raw IPs
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "0.0.0.0";
-  const ipHash = createHash("sha256").update(ip).digest("hex").slice(0, 32);
 
   // Truncate user agent to 256 chars
   const userAgent = (request.headers.get("user-agent") ?? "unknown").slice(

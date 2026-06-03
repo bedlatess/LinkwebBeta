@@ -26,8 +26,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
 } from "recharts";
 
 interface AnalyticsData {
@@ -50,7 +48,7 @@ export function AnalyticsClient() {
         if (!res.ok) throw new Error("Failed to fetch");
         const json = await res.json();
         setData(json);
-      } catch (e) {
+      } catch {
         setError("无法加载分析数据");
       } finally {
         setLoading(false);

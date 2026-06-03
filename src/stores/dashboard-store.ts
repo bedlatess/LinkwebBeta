@@ -26,6 +26,7 @@ export interface ThemePreview {
   bgBlur: number;
   buttonStyle: string;
   fontFamily: string | null;
+  customCSS: string | null;
   tipEnabled: boolean;
   tipTitle: string | null;
   paypalEmail: string | null;
@@ -80,6 +81,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     bgBlur: 0,
     buttonStyle: "rounded",
     fontFamily: null,
+    customCSS: null,
     tipEnabled: false,
     tipTitle: null,
     paypalEmail: null,
@@ -92,12 +94,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   // UI state
   isAddingLink: false,
   setIsAddingLink: (v) =>
-    set({
+    set((state) => ({
       isAddingLink: v,
-      editingLinkId: v
-        ? null
-        : (undefined as unknown as string | null),
-    }),
+      editingLinkId: v ? null : state.editingLinkId,
+    })),
   editingLinkId: null,
   setEditingLinkId: (id) => set({ editingLinkId: id, isAddingLink: false }),
 }));

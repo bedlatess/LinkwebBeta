@@ -8,6 +8,7 @@
  */
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -125,9 +126,11 @@ export function Sidebar({ userName, userEmail, userImage }: SidebarProps) {
           }`}
         >
           {userImage ? (
-            <img
+            <Image
               src={userImage}
               alt=""
+              width={32}
+              height={32}
               className="h-8 w-8 flex-shrink-0 rounded-full ring-1 ring-white/10"
             />
           ) : (

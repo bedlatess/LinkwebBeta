@@ -65,13 +65,13 @@ RUN mkdir -p /app/data && chown -R nextjs:nodejs /app
 # Switch to non-root user
 USER nextjs
 
-EXPOSE 3010
+EXPOSE 3000
 
-ENV PORT=3010
+ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3010/api/auth/signin || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/auth/signin || exit 1
 
 CMD ["node", "server.js"]

@@ -4,7 +4,7 @@
  * Settings Client — Profile info + Custom Domain binding
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   User,
   Globe,
@@ -28,17 +28,11 @@ export function SettingsClient({
   username,
   initialDomain,
 }: Props) {
-  const [domain, setDomain] = useState(initialDomain ?? "");
+  const [domain, setDomain] = useState(() => initialDomain ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [currentDomain, setCurrentDomain] = useState(initialDomain);
-
-  // Sync if initialDomain changes
-  useEffect(() => {
-    setDomain(initialDomain ?? "");
-    setCurrentDomain(initialDomain);
-  }, [initialDomain]);
+  const [currentDomain, setCurrentDomain] = useState(() => initialDomain);
 
   async function handleSaveDomain() {
     setError("");

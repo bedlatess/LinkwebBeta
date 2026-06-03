@@ -36,7 +36,14 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-export function SignInContent() {
+interface SignInContentProps {
+  oauthProviders: {
+    github: boolean;
+    google: boolean;
+  };
+}
+
+export function SignInContent({ oauthProviders }: SignInContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
@@ -115,28 +122,38 @@ export function SignInContent() {
             </div>
 
             {/* ─── OAuth Buttons ─── */}
-            <div className="mb-6 space-y-3">
-              <button
-                type="button"
-                onClick={() => handleOAuthSignIn("github")}
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/80 backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
-              >
-                <GitHubIcon className="h-5 w-5" />
-                使用 GitHub 登录
-              </button>
+            {(oauthProviders.github || oauthProviders.google) && (
+              <div className="mb-6 space-y-3">
+                {oauthProviders.github && (
+                  <button
+                    type="button"
+                    onClick={() => handleOAuthSignIn("github")}
+                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/80 backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                  >
+                    <GitHubIcon className="h-5 w-5" />
+                    使用 GitHub 登录
+                  </button>
+                )}
 
-              <button
-                type="button"
-                onClick={() => handleOAuthSignIn("google")}
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/80 backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
-              >
-                <GoogleIcon className="h-5 w-5" />
-                使用 Google 登录
-              </button>
-            </div>
+                {oauthProviders.google && (
+                  <button
+                    type="button"
+                    onClick={() => handleOAuthSignIn("google")}
+                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/80 backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                  >
+                    <GoogleIcon className="h-5 w-5" />
+                    使用 Google 登录
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* ─── Divider ─── */}
-            <div className="relative mb-6">
+            <div
+              className={`relative ${
+                oauthProviders.github || oauthProviders.google ? "mb-6" : "mb-4"
+              }`}
+            >
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/8" />
               </div>

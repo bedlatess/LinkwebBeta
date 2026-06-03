@@ -12,7 +12,8 @@
  *   - Footer with "Powered by LinkWeb"
  */
 
-import { ExternalLink, Globe, Coffee, X, Copy, Check } from "lucide-react";
+import { ExternalLink, Globe, Coffee, X, Copy, Check, Heart } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useState } from "react";
 
 interface LinkData {
@@ -28,6 +29,7 @@ interface ThemeData {
   bgBlur: number;
   buttonStyle: string;
   fontFamily: string | null;
+  customCSS: string | null;
   tipEnabled: boolean;
   tipTitle: string | null;
   paypalEmail: string | null;
@@ -109,6 +111,10 @@ export function PublicLinkPage({
     }
   }, []);
 
+  const hasTipDetails = Boolean(
+    theme.customTipUrl || theme.paypalEmail || theme.cryptoAddress
+  );
+
   const handleTipClick = useCallback(() => {
     // If a third-party tip URL is set, redirect directly
     if (theme.customTipUrl) {
@@ -129,12 +135,15 @@ export function PublicLinkPage({
     }
   }, []);
 
-  const tipLabel = theme.tipTitle || "☕ 赞助我";
+  const tipLabel = theme.tipTitle || "💖 赞助/打赏";
 
   // ─── Theme-derived styles ───
   const bgStyle: React.CSSProperties = {};
   if (theme.bgType === "color" || theme.bgType === "gradient") {
     bgStyle.background = theme.bgValue;
+  }
+  if (theme.fontFamily) {
+    bgStyle.fontFamily = theme.fontFamily;
   }
 
   const hasBlur = theme.bgBlur > 0;
@@ -161,16 +170,18 @@ export function PublicLinkPage({
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center"
+      className="linkweb-public flex min-h-screen flex-col items-center"
       style={bgStyle}
     >
       <main className="flex w-full max-w-lg flex-1 flex-col items-center px-4 py-16">
         {/* Avatar */}
         <div className="mb-4">
           {avatarUrl ? (
-            <img
+            <Image
               src={avatarUrl}
               alt={displayName}
+              width={80}
+              height={80}
               className={`h-20 w-20 rounded-full object-cover ring-2 ${avatarRing}`}
             />
           ) : (
@@ -198,12 +209,12 @@ export function PublicLinkPage({
         )}
 
         {/* ─── Tip Button ─── */}
-        {theme.tipEnabled && (
+        {theme.tipEnabled && hasTipDetails && (
           <button
             onClick={handleTipClick}
-            className={`mt-6 flex items-center gap-2 border border-amber-400/20 bg-amber-400/[0.08] px-5 py-2.5 text-sm font-medium text-amber-300 backdrop-blur-sm transition-all duration-300 hover:border-amber-400/30 hover:bg-amber-400/[0.12] hover:text-amber-200 animate-pulse ${buttonRadiusClass}`}
+            className={`mt-6 flex items-center gap-2 border border-rose-400/25 bg-rose-400/[0.1] px-5 py-2.5 text-sm font-medium text-rose-200 backdrop-blur-sm transition-all duration-300 hover:border-rose-300/40 hover:bg-rose-400/[0.16] hover:text-white ${buttonRadiusClass}`}
           >
-            <Coffee className="h-4 w-4" />
+            <Heart className="h-4 w-4" />
             {tipLabel}
           </button>
         )}
@@ -258,7 +269,7 @@ export function PublicLinkPage({
         >
           Powered by{" "}
           <a
-            href="https://github.com"
+            href="https://github.com/bedlatess/LinkwebBeta"
             target="_blank"
             rel="noopener noreferrer"
             className="underline underline-offset-2 hover:opacity-70"
@@ -301,10 +312,17 @@ export function PublicLinkPage({
               {theme.paypalEmail && (
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                   <p className="text-xs font-medium text-white/50">PayPal</p>
-                  <div className="mt-1 flex items-center justify-between">
+                  <div className="mt-1 flex items-center justify-between gap-2">
                     <span className="font-mono text-sm text-white/70">
                       {theme.paypalEmail}
                     </span>
+                    <a
+                      href={`mailto:${theme.paypalEmail}`}
+                      className="rounded-lg p-1.5 text-white/30 transition-colors hover:bg-white/[0.05] hover:text-white/60"
+                      title="通过邮箱联系"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
                     <button
                       onClick={() =>
                         copyToClipboard(theme.paypalEmail!, "paypal")
@@ -325,7 +343,7 @@ export function PublicLinkPage({
               {theme.cryptoAddress && (
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                   <p className="text-xs font-medium text-white/50">
-                    加密货币
+                    加密货币地址
                   </p>
                   <div className="mt-1 flex items-center justify-between">
                     <span className="font-mono text-xs text-white/50 truncate max-w-[200px]">
