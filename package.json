@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "bootstrap": "node scripts/bootstrap-dev.mjs",
+    "bootstrap:prod": "node scripts/bootstrap-production.mjs",
     "dev": "node scripts/bootstrap-dev.mjs && next dev -p 2222",
     "build": "next build",
     "start": "node scripts/bootstrap-dev.mjs && next start -p 2222",
