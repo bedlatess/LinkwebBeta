@@ -6,8 +6,8 @@ import { SignInContent } from "./signin-content";
  */
 export default function SignInPage() {
   const oauthProviders = {
-    github: Boolean(process.env.GITHUB_CLIENT_ID),
-    google: Boolean(process.env.GOOGLE_CLIENT_ID),
+    github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_SECRET),
+    google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_SECRET),
   };
 
   return (

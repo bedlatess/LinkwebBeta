@@ -18,8 +18,15 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+const githubClientId = process.env.GITHUB_CLIENT_ID;
+const githubClientSecret = process.env.GITHUB_SECRET;
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_SECRET;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
+  trustHost: true,
 
   providers: [
     // ═══════════════════════════════════════════════════════════════
@@ -37,7 +44,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const email = credentials.email as string;
+        const email = (credentials.email as string).toLowerCase().trim();
         const password = credentials.password as string;
 
         // Find user by email
@@ -58,7 +65,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // Return user object (NextAuth will create the JWT)
         return {
-          id: user.id,
+          id: String(user.id),
           name: user.name,
           email: user.email,
           image: user.image,
@@ -71,14 +78,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     //  These will gracefully not appear on the sign-in page if env
     //  vars are empty, but the routes are registered.
     // ═══════════════════════════════════════════════════════════════
-    GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_SECRET,
-    }),
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_SECRET,
-    }),
+    ...(githubClientId && githubClientSecret
+      ? [
+          GitHub({
+            clientId: githubClientId,
+            clientSecret: githubClientSecret,
+          }),
+        ]
+      : []),
+    ...(googleClientId && googleClientSecret
+      ? [
+          Google({
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
+          }),
+        ]
+      : []),
   ],
 
   session: {
@@ -96,7 +111,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
      */
     async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id;
+        token.id = String(user.id);
       }
       if (account) {
         token.provider = account.provider;

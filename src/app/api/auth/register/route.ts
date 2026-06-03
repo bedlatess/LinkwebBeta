@@ -12,6 +12,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 
 // System reserved usernames — cannot be registered
 const RESERVED = new Set([
@@ -33,92 +34,122 @@ const RESERVED = new Set([
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { email, username, password } = body;
+  try {
+    const body = await request.json().catch(() => null);
+    const email =
+      typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
+    const username =
+      typeof body?.username === "string"
+        ? body.username.toLowerCase().trim()
+        : "";
+    const password = typeof body?.password === "string" ? body.password : "";
 
-  // ─── Validation ───
-  const errors: string[] = [];
+    // ─── Validation ───
+    const errors: string[] = [];
 
-  if (!email || typeof email !== "string" || !email.includes("@")) {
-    errors.push("请提供有效的邮箱地址");
-  }
+    if (!email || !email.includes("@")) {
+      errors.push("请提供有效的邮箱地址");
+    }
 
-  if (!username || typeof username !== "string") {
-    errors.push("请提供用户名");
-  } else if (!USERNAME_REGEX.test(username)) {
-    errors.push("用户名只允许英文字母、数字和下划线，长度 3-30 个字符");
-  } else if (RESERVED.has(username.toLowerCase())) {
-    errors.push(`用户名 "${username}" 为系统保留字，请使用其他用户名`);
-  }
+    if (!username) {
+      errors.push("请提供用户名");
+    } else if (!USERNAME_REGEX.test(username)) {
+      errors.push("用户名只允许英文字母、数字和下划线，长度 3-30 个字符");
+    } else if (RESERVED.has(username)) {
+      errors.push(`用户名 "${username}" 为系统保留字，请使用其他用户名`);
+    }
 
-  if (!password || typeof password !== "string" || password.length < 6) {
-    errors.push("密码长度至少为 6 个字符");
-  }
+    if (!password || password.length < 6) {
+      errors.push("密码长度至少为 6 个字符");
+    }
 
-  if (errors.length > 0) {
-    return NextResponse.json({ error: errors.join("；") }, { status: 400 });
-  }
+    if (errors.length > 0) {
+      return NextResponse.json({ error: errors.join("；") }, { status: 400 });
+    }
 
-  // ─── Uniqueness check ───
-  const existingEmail = await prisma.user.findUnique({
-    where: { email: email.toLowerCase().trim() },
-  });
-
-  if (existingEmail) {
-    return NextResponse.json(
-      { error: "该邮箱已被注册" },
-      { status: 409 }
-    );
-  }
-
-  const existingUsername = await prisma.user.findUnique({
-    where: { username: username.toLowerCase().trim() },
-  });
-
-  if (existingUsername) {
-    return NextResponse.json(
-      { error: "该用户名已被使用" },
-      { status: 409 }
-    );
-  }
-
-  // ─── Create user + default ThemeConfig in a transaction ───
-  const passwordHash = await bcrypt.hash(password, 12);
-
-  const user = await prisma.$transaction(async (tx) => {
-    const newUser = await tx.user.create({
-      data: {
-        email: email.toLowerCase().trim(),
-        username: username.toLowerCase().trim(),
-        name: username,
-        passwordHash,
-      },
+    // ─── Uniqueness check ───
+    const existingEmail = await prisma.user.findUnique({
+      where: { email },
     });
 
-    // Auto-create default ThemeConfig (Classic Glassmorphism)
-    await tx.themeConfig.create({
-      data: {
-        userId: newUser.id,
-        bgType: "gradient",
-        bgValue:
-          "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        bgBlur: 12,
-        buttonStyle: "rounded",
-      },
+    if (existingEmail) {
+      return NextResponse.json(
+        { error: "该邮箱已被注册" },
+        { status: 409 }
+      );
+    }
+
+    const existingUsername = await prisma.user.findUnique({
+      where: { username },
     });
 
-    return newUser;
-  });
+    if (existingUsername) {
+      return NextResponse.json(
+        { error: "该用户名已被使用" },
+        { status: 409 }
+      );
+    }
 
-  return NextResponse.json(
-    {
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
+    // ─── Create user + default ThemeConfig in a transaction ───
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          username,
+          name: username,
+          passwordHash,
+        },
+      });
+
+      // Auto-create default ThemeConfig aligned with the current schema.
+      await tx.themeConfig.create({
+        data: {
+          userId: newUser.id,
+          bgType: "gradient",
+          bgValue: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          bgBlur: 12,
+          buttonStyle: "rounded",
+          fontFamily: "system",
+          customCSS: "",
+          tipEnabled: false,
+          tipTitle: "赞助我",
+          paypalEmail: "",
+          customTipUrl: "",
+          cryptoAddress: "",
+        },
+      });
+
+      return newUser;
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+        },
       },
-    },
-    { status: 201 }
-  );
+      { status: 201 }
+    );
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "邮箱或用户名已被使用" },
+        { status: 409 }
+      );
+    }
+
+    console.error("[register] failed to create account", error);
+    return NextResponse.json(
+      { error: "注册服务暂时不可用，请稍后重试" },
+      { status: 500 }
+    );
+  }
 }

@@ -3,7 +3,6 @@ import {
   ArrowRight,
   BarChart3,
   Coins,
-  ExternalLink,
   GitBranch,
   GripVertical,
   Globe2,
@@ -14,6 +13,19 @@ import {
 } from "lucide-react";
 
 const GITHUB_URL = "https://github.com/bedlatess/LinkwebBeta";
+
+function GitHubMark({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={className}
+      fill="currentColor"
+    >
+      <path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.5v-1.72c-2.78.62-3.37-1.38-3.37-1.38-.45-1.2-1.11-1.52-1.11-1.52-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.85.09-.66.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.3 9.3 0 0 1 12 6.96c.85 0 1.7.12 2.5.34 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.75-4.57 5 .36.32.68.95.68 1.92v2.86c0 .28.18.6.69.5A10.23 10.23 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z" />
+    </svg>
+  );
+}
 
 const features = [
   {
@@ -84,8 +96,11 @@ export default function HomePage() {
                 self-hosted link-in-bio control plane
               </div>
 
-              <h1 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-normal text-white sm:text-7xl lg:text-8xl">
-                LinkWeb：自托管、数据自主的个人链接聚合中心
+              <h1 className="max-w-6xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl md:text-6xl md:leading-[1.08] lg:text-6xl xl:text-7xl xl:leading-[1.05]">
+                <span className="block">LinkWeb：自托管</span>
+                <span className="mt-2 block md:mt-3">
+                  数据自主的个人链接聚合中心
+                </span>
               </h1>
 
               <p className="mt-6 max-w-2xl text-base leading-8 text-white/58 sm:text-lg">
@@ -101,20 +116,11 @@ export default function HomePage() {
                   立即加入 / 去登录
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <a
-                  href={GITHUB_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white/70 transition-colors hover:border-white/25 hover:text-white"
-                >
-                  查看源码
-                  <ExternalLink className="h-4 w-4" />
-                </a>
               </div>
             </div>
 
             <div className="relative">
-              <div className="rounded-2xl border border-white/10 bg-black/45 p-4 shadow-2xl shadow-black/50 backdrop-blur-xl">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-2xl backdrop-blur-md">
                 <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
                   <div className="flex gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
@@ -129,7 +135,7 @@ export default function HomePage() {
                 <div className="space-y-3 font-mono text-xs text-white/55">
                   <p>
                     <span className="text-teal-300">$</span> deploy linkweb
-                    --owner you
+                    --owner pawn
                   </p>
                   <p className="text-white/30">
                     sync links · theme · analytics · tips · domain
@@ -184,15 +190,15 @@ export default function HomePage() {
           </section>
 
           <footer className="flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/35 sm:flex-row sm:items-center sm:justify-between">
-            <span>Open-source self-hosted link infrastructure.</span>
+            <span>© 2026 PAWN. All rights reserved.</span>
             <a
               href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-white/55 transition-colors hover:text-white"
+              className="group inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-white/55 transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-300/30 hover:bg-teal-300/[0.08] hover:text-white"
             >
-              github.com/bedlatess/LinkwebBeta
-              <ExternalLink className="h-3.5 w-3.5" />
+              <GitHubMark className="h-3.5 w-3.5 transition-transform duration-200 group-hover:scale-110" />
+              <span>项目仓库</span>
             </a>
           </footer>
         </div>
