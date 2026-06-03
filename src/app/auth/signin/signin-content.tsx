@@ -54,6 +54,7 @@ export function SignInContent({ oauthProviders }: SignInContentProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
+  const hasOAuthProvider = oauthProviders.github || oauthProviders.google;
 
   async function handleCredentialsSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -122,7 +123,7 @@ export function SignInContent({ oauthProviders }: SignInContentProps) {
             </div>
 
             {/* ─── OAuth Buttons ─── */}
-            {(oauthProviders.github || oauthProviders.google) && (
+            {hasOAuthProvider && (
               <div className="mb-6 space-y-3">
                 {oauthProviders.github && (
                   <button
@@ -149,20 +150,18 @@ export function SignInContent({ oauthProviders }: SignInContentProps) {
             )}
 
             {/* ─── Divider ─── */}
-            <div
-              className={`relative ${
-                oauthProviders.github || oauthProviders.google ? "mb-6" : "mb-4"
-              }`}
-            >
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/8" />
+            {hasOAuthProvider && (
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/8" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-slate-950/50 px-3 text-xs text-white/30 backdrop-blur-sm">
+                    或使用账号密码登录
+                  </span>
+                </div>
               </div>
-              <div className="relative flex justify-center">
-                <span className="bg-slate-950/50 px-3 text-xs text-white/30 backdrop-blur-sm">
-                  或使用账号密码登录
-                </span>
-              </div>
-            </div>
+            )}
 
             {/* ─── Credentials Form ─── */}
             <form onSubmit={handleCredentialsSubmit} className="space-y-4">

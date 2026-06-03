@@ -70,6 +70,7 @@ export async function POST(request: Request) {
     // ─── Uniqueness check ───
     const existingEmail = await prisma.user.findUnique({
       where: { email },
+      select: { id: true },
     });
 
     if (existingEmail) {
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
 
     const existingUsername = await prisma.user.findUnique({
       where: { username },
+      select: { id: true },
     });
 
     if (existingUsername) {
@@ -101,6 +103,11 @@ export async function POST(request: Request) {
           name: username,
           passwordHash,
         },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+        },
       });
 
       // Auto-create default ThemeConfig aligned with the current schema.
@@ -111,14 +118,8 @@ export async function POST(request: Request) {
           bgValue: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           bgBlur: 12,
           buttonStyle: "rounded",
-          fontFamily: "system",
-          customCSS: "",
-          tipEnabled: false,
-          tipTitle: "赞助我",
-          paypalEmail: "",
-          customTipUrl: "",
-          cryptoAddress: "",
         },
+        select: { id: true },
       });
 
       return newUser;
@@ -148,7 +149,10 @@ export async function POST(request: Request) {
 
     console.error("[register] failed to create account", error);
     return NextResponse.json(
-      { error: "注册服务暂时不可用，请稍后重试" },
+      {
+        error:
+          "注册服务暂时不可用，请确认数据库迁移已执行且 DATABASE_URL 可访问",
+      },
       { status: 500 }
     );
   }
