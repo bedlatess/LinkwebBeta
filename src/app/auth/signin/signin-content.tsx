@@ -10,11 +10,12 @@
  *   - Redirect to /dashboard on success
  */
 
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Link2, UserPlus } from "lucide-react";
 import { RegisterForm } from "./register-form";
+import { TurnstileWidget } from "./turnstile-widget";
 
 /** Inline SVG icons for brands not available in lucide-react */
 function GitHubIcon({ className }: { className?: string }) {
@@ -41,9 +42,13 @@ interface SignInContentProps {
     github: boolean;
     google: boolean;
   };
+  turnstileSiteKey: string;
 }
 
-export function SignInContent({ oauthProviders }: SignInContentProps) {
+export function SignInContent({
+  oauthProviders,
+  turnstileSiteKey,
+}: SignInContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
@@ -54,20 +59,41 @@ export function SignInContent({ oauthProviders }: SignInContentProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
+  const [formNotice, setFormNotice] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
   const hasOAuthProvider = oauthProviders.github || oauthProviders.google;
+  const requiresTurnstile = Boolean(turnstileSiteKey);
+
+  const resetTurnstile = useCallback(() => {
+    setTurnstileToken("");
+    setTurnstileNonce((nonce) => nonce + 1);
+  }, []);
+
+  const handleTurnstileError = useCallback((message: string) => {
+    setFormError(message);
+  }, []);
 
   async function handleCredentialsSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");
+    setFormNotice("");
+
+    if (requiresTurnstile && !turnstileToken) {
+      setFormError("请先完成人机验证。");
+      return;
+    }
 
     const result = await signIn("credentials", {
       email,
       password,
+      turnstileToken,
       redirect: false,
     });
 
     if (result?.error) {
-      setFormError("邮箱或密码错误，请重试。");
+      setFormError("人机验证未通过，或邮箱密码错误，请重试。");
+      resetTurnstile();
     } else {
       startTransition(() => {
         router.push(callbackUrl);
@@ -93,20 +119,14 @@ export function SignInContent({ oauthProviders }: SignInContentProps) {
       <div className="relative z-10 w-full max-w-md px-4">
         {mode === "register" ? (
           <RegisterForm
+            turnstileSiteKey={turnstileSiteKey}
             onSwitchToSignIn={() => setMode("signin")}
             onSuccess={(email, password) => {
-              // After registration, auto sign-in with the same credentials
               setEmail(email);
               setPassword(password);
+              setFormNotice("注册成功，请完成人机验证后登录。");
+              resetTurnstile();
               setMode("signin");
-              // Trigger sign-in after a brief delay to let state settle
-              setTimeout(() => {
-                signIn("credentials", {
-                  email,
-                  password,
-                  callbackUrl,
-                });
-              }, 300);
             }}
           />
         ) : (
@@ -205,6 +225,22 @@ export function SignInContent({ oauthProviders }: SignInContentProps) {
                 />
               </div>
 
+              {requiresTurnstile && (
+                <TurnstileWidget
+                  key={turnstileNonce}
+                  siteKey={turnstileSiteKey}
+                  action="login"
+                  onVerify={setTurnstileToken}
+                  onError={handleTurnstileError}
+                />
+              )}
+
+              {formNotice && (
+                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-300">
+                  {formNotice}
+                </div>
+              )}
+
               {/* Error messages */}
               {(formError || error) && (
                 <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
@@ -217,7 +253,7 @@ export function SignInContent({ oauthProviders }: SignInContentProps) {
 
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || (requiresTurnstile && !turnstileToken)}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:from-indigo-400 hover:to-purple-500 hover:shadow-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPending ? (

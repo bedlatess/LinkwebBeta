@@ -16,6 +16,7 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import bcrypt from "bcryptjs";
 
 const githubClientId = process.env.GITHUB_CLIENT_ID;
@@ -38,8 +39,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email", placeholder: "admin@linkweb.local" },
         password: { label: "Password", type: "password" },
+        turnstileToken: { label: "Turnstile Token", type: "hidden" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
+        const turnstile = await verifyTurnstileToken(
+          credentials?.turnstileToken,
+          request,
+          "login"
+        );
+
+        if (!turnstile.success) {
+          console.warn("[auth] Turnstile login verification failed", {
+            codes: turnstile.codes,
+            skipped: turnstile.skipped,
+          });
+          return null;
+        }
+
         if (!credentials?.email || !credentials?.password) {
           return null;
         }

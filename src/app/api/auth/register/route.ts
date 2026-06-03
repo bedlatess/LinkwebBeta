@@ -11,6 +11,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 
@@ -43,6 +44,20 @@ export async function POST(request: Request) {
         ? body.username.toLowerCase().trim()
         : "";
     const password = typeof body?.password === "string" ? body.password : "";
+    const turnstileToken = body?.turnstileToken;
+
+    const turnstile = await verifyTurnstileToken(
+      turnstileToken,
+      request,
+      "register"
+    );
+
+    if (!turnstile.success) {
+      return NextResponse.json(
+        { error: turnstile.error ?? "人机验证未通过，请重试。" },
+        { status: 403 }
+      );
+    }
 
     // ─── Validation ───
     const errors: string[] = [];

@@ -9,6 +9,7 @@ export default function SignInPage() {
     github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_SECRET),
     google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_SECRET),
   };
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
   return (
     <Suspense
@@ -18,7 +19,10 @@ export default function SignInPage() {
         </div>
       }
     >
-      <SignInContent oauthProviders={oauthProviders} />
+      <SignInContent
+        oauthProviders={oauthProviders}
+        turnstileSiteKey={turnstileSiteKey}
+      />
     </Suspense>
   );
 }

@@ -9,24 +9,42 @@
  * On success: calls onSuccess(email, password) for auto sign-in
  */
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Loader2, Link2, ArrowLeft, Check } from "lucide-react";
+import { TurnstileWidget } from "./turnstile-widget";
 
 // Username regex: letters, numbers, underscores, 3-30 chars
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 interface Props {
+  turnstileSiteKey: string;
   onSwitchToSignIn: () => void;
   onSuccess: (email: string, password: string) => void;
 }
 
-export function RegisterForm({ onSwitchToSignIn, onSuccess }: Props) {
+export function RegisterForm({
+  turnstileSiteKey,
+  onSwitchToSignIn,
+  onSuccess,
+}: Props) {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const requiresTurnstile = Boolean(turnstileSiteKey);
+
+  const resetTurnstile = useCallback(() => {
+    setTurnstileToken("");
+    setTurnstileNonce((nonce) => nonce + 1);
+  }, []);
+
+  const handleTurnstileError = useCallback((message: string) => {
+    setError(message);
+  }, []);
 
   // Client-side username validation
   const usernameError = username.length > 0 && !USERNAME_REGEX.test(username)
@@ -55,6 +73,11 @@ export function RegisterForm({ onSwitchToSignIn, onSuccess }: Props) {
       return;
     }
 
+    if (requiresTurnstile && !turnstileToken) {
+      setError("请先完成人机验证。");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -65,6 +88,7 @@ export function RegisterForm({ onSwitchToSignIn, onSuccess }: Props) {
           email: email.trim(),
           username: username.trim(),
           password,
+          turnstileToken,
         }),
       });
 
@@ -72,6 +96,7 @@ export function RegisterForm({ onSwitchToSignIn, onSuccess }: Props) {
 
       if (!res.ok) {
         setError(data.error ?? "注册失败，请重试");
+        resetTurnstile();
         return;
       }
 
@@ -79,6 +104,7 @@ export function RegisterForm({ onSwitchToSignIn, onSuccess }: Props) {
       onSuccess(email.trim(), password);
     } catch {
       setError("网络错误，请检查连接后重试");
+      resetTurnstile();
     } finally {
       setLoading(false);
     }
@@ -189,10 +215,25 @@ export function RegisterForm({ onSwitchToSignIn, onSuccess }: Props) {
           </div>
         )}
 
+        {requiresTurnstile && (
+          <TurnstileWidget
+            key={turnstileNonce}
+            siteKey={turnstileSiteKey}
+            action="register"
+            onVerify={setTurnstileToken}
+            onError={handleTurnstileError}
+          />
+        )}
+
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading || !!usernameError || !!passwordError}
+          disabled={
+            loading ||
+            !!usernameError ||
+            !!passwordError ||
+            (requiresTurnstile && !turnstileToken)
+          }
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:from-indigo-400 hover:to-purple-500 hover:shadow-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
