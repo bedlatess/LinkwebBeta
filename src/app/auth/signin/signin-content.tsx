@@ -43,11 +43,13 @@ interface SignInContentProps {
     google: boolean;
   };
   turnstileSiteKey: string;
+  registrationEnabled: boolean;
 }
 
 export function SignInContent({
   oauthProviders,
   turnstileSiteKey,
+  registrationEnabled,
 }: SignInContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -117,7 +119,7 @@ export function SignInContent({
 
       {/* ─── Glassmorphism card ─── */}
       <div className="relative z-10 w-full max-w-md px-4">
-        {mode === "register" ? (
+        {mode === "register" && registrationEnabled ? (
           <RegisterForm
             turnstileSiteKey={turnstileSiteKey}
             onSwitchToSignIn={() => setMode("signin")}
@@ -268,16 +270,18 @@ export function SignInContent({
             </form>
 
             {/* ─── Register toggle ─── */}
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => setMode("register")}
-                className="inline-flex items-center gap-1.5 text-xs text-white/30 transition-colors hover:text-indigo-400"
-              >
-                <UserPlus className="h-3.5 w-3.5" />
-                没有账号？立即注册
-              </button>
-            </div>
+            {registrationEnabled && (
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={() => setMode("register")}
+                  className="inline-flex items-center gap-1.5 text-xs text-white/30 transition-colors hover:text-indigo-400"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  没有账号？立即注册
+                </button>
+              </div>
+            )}
 
             {/* ─── Footer hint ─── */}
             <p className="mt-4 text-center text-xs text-white/20">

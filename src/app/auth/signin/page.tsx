@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { SignInContent } from "./signin-content";
+import { isRegistrationEnabled } from "@/lib/registration";
 
 /**
  * LinkWeb Sign-In Page — Wrapped in Suspense for useSearchParams()
@@ -10,6 +11,7 @@ export default function SignInPage() {
     google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_SECRET),
   };
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+  const registrationEnabled = isRegistrationEnabled();
 
   return (
     <Suspense
@@ -22,6 +24,7 @@ export default function SignInPage() {
       <SignInContent
         oauthProviders={oauthProviders}
         turnstileSiteKey={turnstileSiteKey}
+        registrationEnabled={registrationEnabled}
       />
     </Suspense>
   );
