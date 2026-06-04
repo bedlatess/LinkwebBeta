@@ -24,10 +24,8 @@ services:
       - DATABASE_URL=file:/app/data/linkweb.db
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:2222}
     volumes:
-      # Persist SQLite database file
+      # Persist SQLite database and uploaded assets (/app/data/uploads)
       - linkweb-data:/app/data
-      # Persist user-uploaded assets (avatars, background images)
-      - linkweb-uploads:/app/public/uploads
     restart: unless-stopped
     # Security: no new privileges, read-only root filesystem (except volumes)
     security_opt:
@@ -36,6 +34,4 @@ services:
 
 volumes:
   linkweb-data:
-    driver: local
-  linkweb-uploads:
     driver: local

@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { getPublicUploadUrl, writeUploadFile } from "@/lib/upload-storage";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -45,15 +44,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "avatars");
-    await mkdir(uploadDir, { recursive: true });
-
     const filename = `${session.user.id}-${Date.now()}.${extension}`;
-    const diskPath = path.join(uploadDir, filename);
-    const publicUrl = `/uploads/avatars/${filename}`;
+    const publicUrl = getPublicUploadUrl("avatars", filename);
     const bytes = Buffer.from(await file.arrayBuffer());
 
-    await writeFile(diskPath, bytes);
+    await writeUploadFile("avatars", filename, bytes);
 
     await prisma.user.update({
       where: { id: session.user.id },
@@ -64,7 +59,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[settings/avatar] upload failed", error);
     return NextResponse.json(
-      { error: "头像上传失败，请确认上传目录可写并稍后重试" },
+      { error: "头像上传失败，请检查容器数据卷权限后重试" },
       { status: 500 }
     );
   }

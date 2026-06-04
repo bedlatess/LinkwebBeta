@@ -117,6 +117,7 @@ export default auth(async (req) => {
   const isNextAsset =
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/uploads/") ||
     pathname.startsWith("/robots.txt") ||
     pathname.startsWith("/sitemap.xml");
 
@@ -238,6 +239,6 @@ export default auth(async (req) => {
  */
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|uploads).*)",
   ],
 };

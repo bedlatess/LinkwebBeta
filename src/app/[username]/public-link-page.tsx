@@ -1,19 +1,15 @@
 "use client";
 
-/**
- * Public Link Page — Client Component
- *
- * Renders the fully-themed public link aggregation page.
- * Includes:
- *   - Inline theme CSS from ThemeConfig
- *   - User avatar, name, bio
- *   - Link buttons with click tracking
- *   - Tip / Support button with Glassmorphism modal
- *   - Footer with "Powered by LinkWeb"
- */
-
 import { getLinkIconOption } from "@/lib/link-icons";
-import { ExternalLink, Globe, Coffee, X, Copy, Check, Heart } from "lucide-react";
+import {
+  Check,
+  Coffee,
+  Copy,
+  ExternalLink,
+  Globe,
+  Heart,
+  X,
+} from "lucide-react";
 import { useCallback, useState } from "react";
 
 interface LinkData {
@@ -57,6 +53,12 @@ export function PublicLinkPage({
   const [tipModalOpen, setTipModalOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
+  const customTipUrl = theme.customTipUrl?.trim() || null;
+  const paypalTarget = theme.paypalEmail?.trim() || null;
+  const cryptoAddress = theme.cryptoAddress?.trim() || null;
+  const hasTipDetails = Boolean(customTipUrl || paypalTarget || cryptoAddress);
+  const tipLabel = theme.tipTitle || "赞助 / 打赏";
+
   const trackClick = useCallback(async (linkId: string) => {
     try {
       await fetch("/api/visit", {
@@ -65,23 +67,9 @@ export function PublicLinkPage({
         body: JSON.stringify({ linkId }),
       });
     } catch {
-      // Silently ignore
+      // Click tracking should never block navigation.
     }
   }, []);
-
-  const hasTipDetails = Boolean(
-    theme.customTipUrl || theme.paypalEmail || theme.cryptoAddress
-  );
-
-  const handleTipClick = useCallback(() => {
-    // If a third-party tip URL is set, redirect directly
-    if (theme.customTipUrl) {
-      window.open(theme.customTipUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-    // Otherwise open the modal
-    setTipModalOpen(true);
-  }, [theme.customTipUrl]);
 
   const copyToClipboard = useCallback(async (text: string, field: string) => {
     try {
@@ -89,13 +77,27 @@ export function PublicLinkPage({
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
     } catch {
-      // fallback
+      // Ignore clipboard failures; the value is still visible.
     }
   }, []);
 
-  const tipLabel = theme.tipTitle || "💖 赞助/打赏";
+  const openTipTarget = useCallback(
+    (target: string | null, type: "custom" | "paypal" = "custom") => {
+      const href =
+        type === "paypal"
+          ? normalizePaypalTarget(target)
+          : normalizeHttpTarget(target);
 
-  // ─── Theme-derived styles ───
+      if (!href) {
+        window.location.assign(window.location.href);
+        return;
+      }
+
+      window.open(href, "_blank", "noopener,noreferrer");
+    },
+    []
+  );
+
   const bgStyle: React.CSSProperties = {};
   if (theme.bgType === "color" || theme.bgType === "gradient") {
     bgStyle.background = theme.bgValue;
@@ -112,8 +114,8 @@ export function PublicLinkPage({
     theme.buttonStyle === "pill"
       ? "rounded-full"
       : theme.buttonStyle === "square"
-      ? "rounded-lg"
-      : "rounded-2xl";
+        ? "rounded-lg"
+        : "rounded-2xl";
 
   const isDarkBg =
     theme.bgType === "gradient" ||
@@ -138,13 +140,14 @@ export function PublicLinkPage({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 border-b border-white/10 bg-white/[0.025]" />
 
       <main className="relative z-10 flex w-full max-w-lg flex-1 flex-col items-center px-4 py-16">
-        {/* Avatar */}
         <div className="mb-4">
           {avatarUrl ? (
             <div
               className={`relative h-20 w-20 overflow-hidden rounded-full ring-2 ${avatarRing}`}
             >
-              <div className={`absolute inset-0 flex items-center justify-center ${cardBg}`}>
+              <div
+                className={`absolute inset-0 flex items-center justify-center ${cardBg}`}
+              >
                 <Globe
                   className={`h-8 w-8 ${
                     isDarkBg ? "text-white/25" : "text-slate-400"
@@ -166,7 +169,7 @@ export function PublicLinkPage({
             </div>
           ) : (
             <div
-            className={`flex h-20 w-20 items-center justify-center rounded-3xl ${cardBg} ring-2 ${avatarRing}`}
+              className={`flex h-20 w-20 items-center justify-center rounded-3xl ${cardBg} ring-2 ${avatarRing}`}
             >
               <Globe
                 className={`h-8 w-8 ${
@@ -187,10 +190,9 @@ export function PublicLinkPage({
           </p>
         )}
 
-        {/* ─── Tip Button ─── */}
-        {theme.tipEnabled && hasTipDetails && (
+        {theme.tipEnabled && (
           <button
-            onClick={handleTipClick}
+            onClick={() => setTipModalOpen(true)}
             className={`mt-6 flex items-center gap-2 border border-rose-400/25 bg-rose-400/[0.1] px-5 py-2.5 text-sm font-medium text-rose-200 backdrop-blur-sm transition-all duration-300 hover:border-rose-300/40 hover:bg-rose-400/[0.16] hover:text-white ${buttonRadiusClass}`}
           >
             <Heart className="h-4 w-4" />
@@ -198,7 +200,6 @@ export function PublicLinkPage({
           </button>
         )}
 
-        {/* Links */}
         <div className="mt-8 w-full space-y-3">
           {links.map((link) => {
             const Icon = getLinkIconOption(link.iconName).icon;
@@ -264,16 +265,13 @@ export function PublicLinkPage({
         </p>
       </footer>
 
-      {/* ─── Tip Modal ─── */}
       {tipModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/70 backdrop-blur-md"
             onClick={() => setTipModalOpen(false)}
           />
 
-          {/* Modal */}
           <div className="relative z-10 w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900/95 p-6 shadow-2xl shadow-black/50 backdrop-blur-2xl">
             <button
               onClick={() => setTipModalOpen(false)}
@@ -284,61 +282,46 @@ export function PublicLinkPage({
 
             <div className="text-center">
               <Coffee className="mx-auto mb-3 h-8 w-8 text-amber-400" />
-              <h2 className="text-lg font-semibold text-white">
-                {tipLabel}
-              </h2>
+              <h2 className="text-lg font-semibold text-white">{tipLabel}</h2>
               <p className="mt-1 text-xs text-white/40">
-                感谢你的支持！
+                选择一个方式继续支持创作者
               </p>
             </div>
 
             <div className="mt-6 space-y-3">
-              {/* PayPal */}
-              {theme.paypalEmail && (
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <p className="text-xs font-medium text-white/50">PayPal</p>
-                  <div className="mt-1 flex items-center justify-between gap-2">
-                    <span className="font-mono text-sm text-white/70">
-                      {theme.paypalEmail}
-                    </span>
-                    <a
-                      href={`mailto:${theme.paypalEmail}`}
-                      className="rounded-lg p-1.5 text-white/30 transition-colors hover:bg-white/[0.05] hover:text-white/60"
-                      title="通过邮箱联系"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                    <button
-                      onClick={() =>
-                        copyToClipboard(theme.paypalEmail!, "paypal")
-                      }
-                      className="rounded-lg p-1.5 text-white/30 transition-colors hover:bg-white/[0.05] hover:text-white/60"
-                    >
-                      {copiedField === "paypal" ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
+              {customTipUrl && (
+                <TipLinkRow
+                  copied={copiedField === "custom"}
+                  label="自定义赞助链接"
+                  value={customTipUrl}
+                  onCopy={() => copyToClipboard(customTipUrl, "custom")}
+                  onOpen={() => openTipTarget(customTipUrl, "custom")}
+                />
               )}
 
-              {/* Crypto */}
-              {theme.cryptoAddress && (
+              {paypalTarget && (
+                <TipLinkRow
+                  copied={copiedField === "paypal"}
+                  label="PayPal"
+                  value={paypalTarget}
+                  onCopy={() => copyToClipboard(paypalTarget, "paypal")}
+                  onOpen={() => openTipTarget(paypalTarget, "paypal")}
+                />
+              )}
+
+              {cryptoAddress && (
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                   <p className="text-xs font-medium text-white/50">
-                    加密货币地址
+                    加密货币收款地址
                   </p>
-                  <div className="mt-1 flex items-center justify-between">
-                    <span className="font-mono text-xs text-white/50 truncate max-w-[200px]">
-                      {theme.cryptoAddress}
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <span className="max-w-[220px] truncate font-mono text-xs text-white/50">
+                      {cryptoAddress}
                     </span>
                     <button
-                      onClick={() =>
-                        copyToClipboard(theme.cryptoAddress!, "crypto")
-                      }
+                      onClick={() => copyToClipboard(cryptoAddress, "crypto")}
                       className="rounded-lg p-1.5 text-white/30 transition-colors hover:bg-white/[0.05] hover:text-white/60"
+                      title="复制加密货币地址"
                     >
                       {copiedField === "crypto" ? (
                         <Check className="h-3.5 w-3.5 text-emerald-400" />
@@ -350,20 +333,92 @@ export function PublicLinkPage({
                 </div>
               )}
 
-              {/* No details */}
-              {!theme.paypalEmail &&
-                !theme.cryptoAddress &&
-                !theme.customTipUrl && (
-                  <p className="text-center text-xs text-white/30">
-                    此创作者尚未设置收款信息
+              {!hasTipDetails && (
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
+                  <p className="text-xs leading-5 text-white/35">
+                    该创作者暂未配置具体收款信息。
                   </p>
-                )}
+                  <button
+                    onClick={() => openTipTarget(null)}
+                    className="mt-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white/55 transition hover:bg-white/[0.07] hover:text-white"
+                  >
+                    返回当前页面
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function TipLinkRow({
+  copied,
+  label,
+  onCopy,
+  onOpen,
+  value,
+}: {
+  copied: boolean;
+  label: string;
+  onCopy: () => void;
+  onOpen: () => void;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+      <p className="text-xs font-medium text-white/50">{label}</p>
+      <div className="mt-1 flex items-center justify-between gap-2">
+        <span className="truncate font-mono text-xs text-white/60">
+          {value}
+        </span>
+        <button
+          onClick={onOpen}
+          className="rounded-lg p-1.5 text-white/30 transition-colors hover:bg-white/[0.05] hover:text-white/60"
+          title={`打开${label}`}
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={onCopy}
+          className="rounded-lg p-1.5 text-white/30 transition-colors hover:bg-white/[0.05] hover:text-white/60"
+          title={`复制${label}`}
+        >
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-emerald-400" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function normalizeHttpTarget(target: string | null) {
+  if (!target) return null;
+
+  try {
+    const url = new URL(target);
+    return ["http:", "https:"].includes(url.protocol) ? target : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizePaypalTarget(target: string | null) {
+  if (!target) return null;
+
+  const httpTarget = normalizeHttpTarget(target);
+  if (httpTarget) return httpTarget;
+
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
+    return `mailto:${target}`;
+  }
+
+  return null;
 }
 
 function isColorDark(hex: string): boolean {
