@@ -174,8 +174,7 @@ Docker Compose 启动示例：
 
 ```bash
 docker compose up -d --build
-docker compose exec linkweb npx prisma migrate deploy
-docker compose exec linkweb npx prisma generate
+docker compose exec -e NPM_CONFIG_CACHE=/tmp/.npm linkweb npx prisma migrate deploy
 ```
 
 默认映射：

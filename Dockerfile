@@ -63,7 +63,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
 # Create data directory for SQLite
@@ -74,6 +76,8 @@ USER nextjs
 
 EXPOSE 3000
 
+ENV HOME=/tmp
+ENV NPM_CONFIG_CACHE=/tmp/.npm
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
