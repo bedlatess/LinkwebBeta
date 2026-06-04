@@ -1,3 +1,4 @@
+import { getAdminActor } from "@/lib/admin-action-auth";
 import { getGlobalSiteSettings } from "@/lib/site-settings";
 import {
   AlertTriangle,
@@ -8,6 +9,7 @@ import {
   ShieldCheck,
   UserPlus,
 } from "lucide-react";
+import { notFound } from "next/navigation";
 import {
   toggleMaintenanceMode,
   toggleOauthEnabled,
@@ -40,6 +42,7 @@ function FeatureFlagCard({
   action,
   icon: Icon,
   tone = "emerald",
+  disabled = false,
 }: {
   title: string;
   description: string;
@@ -47,6 +50,7 @@ function FeatureFlagCard({
   action: () => Promise<void>;
   icon: typeof UserPlus;
   tone?: "emerald" | "amber";
+  disabled?: boolean;
 }) {
   const enabledClass =
     tone === "amber"
@@ -59,7 +63,8 @@ function FeatureFlagCard({
     <form action={action}>
       <button
         type="submit"
-        className="group flex w-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-left shadow-2xl shadow-black/15 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-white/18 hover:bg-white/[0.055]"
+        disabled={disabled}
+        className="group flex w-full items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-left shadow-2xl shadow-black/15 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-white/18 hover:bg-white/[0.055] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0"
       >
         <div className="flex min-w-0 items-start gap-4">
           <div
@@ -84,7 +89,7 @@ function FeatureFlagCard({
               enabled ? enabledTextClass : "text-white/35"
             }`}
           >
-            {enabled ? "已开启" : "已关闭"}
+            {disabled ? "无权限" : enabled ? "已开启" : "已关闭"}
           </span>
           <SwitchVisual enabled={enabled} />
         </div>
@@ -94,6 +99,12 @@ function FeatureFlagCard({
 }
 
 export default async function AdminSettingsPage() {
+  const actor = await getAdminActor();
+
+  if (!actor?.permissions.permManageSettings) {
+    notFound();
+  }
+
   const settings = await getGlobalSiteSettings();
 
   return (
@@ -189,6 +200,7 @@ export default async function AdminSettingsPage() {
             action={toggleMaintenanceMode}
             icon={AlertTriangle}
             tone="amber"
+            disabled={!actor.permissions.permToggleMaintenance}
           />
           <FeatureFlagCard
             title="新用户注册通道"

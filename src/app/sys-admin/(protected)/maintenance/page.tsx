@@ -1,3 +1,4 @@
+import { getAdminActor } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
 import {
   Activity,
@@ -7,6 +8,7 @@ import {
   ShieldAlert,
   TimerReset,
 } from "lucide-react";
+import { notFound } from "next/navigation";
 import { CleanupActionButton } from "./cleanup-action-button";
 import { cleanupEmptyLinks, cleanupExpiredSessions } from "./maintenance-actions";
 
@@ -90,6 +92,12 @@ function DangerCard({
 }
 
 export default async function AdminMaintenancePage() {
+  const actor = await getAdminActor();
+
+  if (!actor?.permissions.permManageUsers) {
+    notFound();
+  }
+
   const now = new Date();
 
   const [expiredSessions, emptyLinks, totalSessions, totalLinks, totalVisits] =

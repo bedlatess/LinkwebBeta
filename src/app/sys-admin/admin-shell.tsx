@@ -1,5 +1,6 @@
 "use client";
 
+import type { AdminActor } from "@/lib/admin-action-auth";
 import {
   AlertTriangle,
   BarChart3,
@@ -16,32 +17,58 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-const navItems = [
-  { href: "/sys-admin", label: "仪表盘", icon: BarChart3 },
-  { href: "/sys-admin/users", label: "用户管理", icon: Users },
-  { href: "/sys-admin/links", label: "内容审查", icon: AlertTriangle },
-  { href: "/sys-admin/settings", label: "全局设置", icon: Settings },
-  { href: "/sys-admin/maintenance", label: "数据清理", icon: Wrench },
-];
-
 interface AdminShellProps {
+  actor: AdminActor;
   adminEmail: string;
   children: React.ReactNode;
 }
 
-export function AdminShell({ adminEmail, children }: AdminShellProps) {
+export function AdminShell({ actor, adminEmail, children }: AdminShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navItems = [
+    { href: "/sys-admin", label: "仪表盘", icon: BarChart3, visible: true },
+    {
+      href: "/sys-admin/users",
+      label: "用户管理",
+      icon: Users,
+      visible: actor.permissions.permManageUsers,
+    },
+    {
+      href: "/sys-admin/links",
+      label: "内容审查",
+      icon: AlertTriangle,
+      visible: actor.permissions.permManageLinks,
+    },
+    {
+      href: "/sys-admin/settings",
+      label: "全局设置",
+      icon: Settings,
+      visible: actor.permissions.permManageSettings,
+    },
+    {
+      href: "/sys-admin/maintenance",
+      label: "数据清理",
+      icon: Wrench,
+      visible: actor.permissions.permManageUsers,
+    },
+  ].filter((item) => item.visible);
 
   async function handleLogout() {
     setSigningOut(true);
 
     try {
-      await fetch("/sys-admin/api/logout", { method: "POST" });
+      if (actor.type === "SUPER_ADMIN") {
+        await fetch("/sys-admin/api/logout", { method: "POST" });
+      }
     } finally {
-      router.push("/sys-admin/login");
+      const nextPath =
+        actor.type === "SUPER_ADMIN"
+          ? "/sys-admin/login"
+          : "/api/auth/signout?callbackUrl=/auth/signin";
+      router.push(nextPath);
       router.refresh();
     }
   }
@@ -88,6 +115,9 @@ export function AdminShell({ adminEmail, children }: AdminShellProps) {
           <p className="text-xs text-white/35">当前管理员</p>
           <p className="mt-1 truncate text-sm font-medium text-white/80">
             {adminEmail}
+          </p>
+          <p className="mt-1 text-xs text-emerald-200/55">
+            {actor.type === "SUPER_ADMIN" ? "Super Admin" : "Normal Admin"}
           </p>
         </div>
       </div>

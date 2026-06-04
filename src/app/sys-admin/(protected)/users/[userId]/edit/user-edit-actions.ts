@@ -11,7 +11,7 @@ function cleanNullable(value: FormDataEntryValue | null) {
 }
 
 export async function updateManagedUser(userId: string, formData: FormData) {
-  await requireAdminActionSession();
+  await requireAdminActionSession("permManageUsers");
 
   const name = cleanNullable(formData.get("name"));
   const bio = cleanNullable(formData.get("bio"));
@@ -61,7 +61,7 @@ export async function resetManagedUserPassword(
   userId: string,
   formData: FormData
 ) {
-  await requireAdminActionSession();
+  await requireAdminActionSession("permManageUsers");
 
   const password = String(formData.get("password") ?? "");
 

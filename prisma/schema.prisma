@@ -33,6 +33,12 @@ model User {
   allowCustomCSS  Boolean @default(true)
   allowCustomFont Boolean @default(true)
   allowTips       Boolean @default(true)
+  role                  String  @default("USER") // "USER" | "ADMIN"
+  permManageUsers       Boolean @default(false)  // user governance permission
+  permDeleteUsers       Boolean @default(false)  // high risk: hard delete users
+  permManageLinks       Boolean @default(false)  // content review permission
+  permManageSettings    Boolean @default(false)  // global site settings permission
+  permToggleMaintenance Boolean @default(false)  // high risk: maintenance mode toggle
 
   // Relations
   accounts      Account[]
@@ -42,6 +48,8 @@ model User {
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([role])
 }
 
 model AdminUser {

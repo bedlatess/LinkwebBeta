@@ -47,8 +47,9 @@ export default auth(async (req) => {
     }
 
     const adminSession = await verifyAdminSessionFromRequest(req);
+    const hasNormalAdminSession = req.auth?.user?.role === "ADMIN";
 
-    if (!adminSession) {
+    if (!adminSession && !hasNormalAdminSession) {
       if (pathname.startsWith("/sys-admin/api")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }

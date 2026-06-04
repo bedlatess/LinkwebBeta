@@ -1,3 +1,4 @@
+import { getAdminActor } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
 import {
   ArrowLeft,
@@ -21,6 +22,12 @@ interface Props {
 }
 
 export default async function ManagedUserEditPage({ params }: Props) {
+  const actor = await getAdminActor();
+
+  if (!actor?.permissions.permManageUsers) {
+    notFound();
+  }
+
   const { userId } = await params;
   const user = await prisma.user.findUnique({
     where: { id: userId },

@@ -1,10 +1,8 @@
-import {
-  ADMIN_SESSION_COOKIE,
-  verifyAdminSessionFromRequest,
-} from "@/lib/admin-session";
-import { cookies } from "next/headers";
+import { getAdminActor } from "@/lib/admin-action-auth";
 import { redirect } from "next/navigation";
 import { AdminShell } from "../admin-shell";
+import { AdminSessionProvider } from "../admin-session-provider";
+import { AdminSessionRefresher } from "../admin-session-refresher";
 
 export const dynamic = "force-dynamic";
 
@@ -13,18 +11,29 @@ export default async function ProtectedAdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
-  const request = new Request("http://linkweb.local/sys-admin", {
-    headers: token ? { cookie: `${ADMIN_SESSION_COOKIE}=${token}` } : {},
-  });
-  const adminSession = await verifyAdminSessionFromRequest(request);
+  const actor = await getAdminActor();
 
-  if (!adminSession) {
+  if (!actor) {
     redirect("/sys-admin/login");
   }
 
-  return (
-    <AdminShell adminEmail={adminSession.email}>{children}</AdminShell>
+  const adminEmail =
+    actor.type === "SUPER_ADMIN" ? actor.email : actor.email ?? actor.userId;
+
+  const shell = (
+    <AdminShell actor={actor} adminEmail={adminEmail}>
+      {children}
+    </AdminShell>
   );
+
+  if (actor.type === "NORMAL_ADMIN") {
+    return (
+      <AdminSessionProvider>
+        <AdminSessionRefresher />
+        {shell}
+      </AdminSessionProvider>
+    );
+  }
+
+  return shell;
 }

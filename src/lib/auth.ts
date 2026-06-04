@@ -10,8 +10,8 @@
  * Session strategy: JWT (default)
  */
 
-import NextAuth from "next-auth";
-import { CredentialsSignin } from "next-auth";
+import NextAuth, { CredentialsSignin, type DefaultSession } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
@@ -26,8 +26,109 @@ const githubClientSecret = process.env.GITHUB_SECRET;
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_SECRET;
 
+export const ADMIN_PERMISSION_FIELDS = [
+  "permManageUsers",
+  "permDeleteUsers",
+  "permManageLinks",
+  "permManageSettings",
+  "permToggleMaintenance",
+] as const;
+
+export type AdminPermissionField = (typeof ADMIN_PERMISSION_FIELDS)[number];
+export type UserRole = "USER" | "ADMIN";
+export type AdminPermissionClaims = Record<AdminPermissionField, boolean>;
+
+const EMPTY_ADMIN_PERMISSIONS: AdminPermissionClaims = {
+  permManageUsers: false,
+  permDeleteUsers: false,
+  permManageLinks: false,
+  permManageSettings: false,
+  permToggleMaintenance: false,
+};
+
+declare module "next-auth" {
+  interface Session {
+    user: DefaultSession["user"] & {
+      id: string;
+      role: UserRole;
+    } & AdminPermissionClaims;
+  }
+
+  interface User {
+    role?: UserRole;
+    permManageUsers?: boolean;
+    permDeleteUsers?: boolean;
+    permManageLinks?: boolean;
+    permManageSettings?: boolean;
+    permToggleMaintenance?: boolean;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    role?: UserRole;
+    permManageUsers?: boolean;
+    permDeleteUsers?: boolean;
+    permManageLinks?: boolean;
+    permManageSettings?: boolean;
+    permToggleMaintenance?: boolean;
+  }
+}
+
 class AccountBannedError extends CredentialsSignin {
   code = "account_banned";
+}
+
+function normalizeAdminClaims(user: Partial<AdminPermissionClaims> & { role?: string } | null) {
+  return {
+    role: (user?.role === "ADMIN" ? "ADMIN" : "USER") as UserRole,
+    permManageUsers: user?.permManageUsers ?? false,
+    permDeleteUsers: user?.permDeleteUsers ?? false,
+    permManageLinks: user?.permManageLinks ?? false,
+    permManageSettings: user?.permManageSettings ?? false,
+    permToggleMaintenance: user?.permToggleMaintenance ?? false,
+  };
+}
+
+async function loadUserAdminClaims(
+  userId?: string | null,
+  email?: string | null
+) {
+  const user = userId
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          role: true,
+          permManageUsers: true,
+          permDeleteUsers: true,
+          permManageLinks: true,
+          permManageSettings: true,
+          permToggleMaintenance: true,
+        },
+      })
+    : email
+    ? await prisma.user.findUnique({
+        where: { email: email.toLowerCase().trim() },
+        select: {
+          role: true,
+          permManageUsers: true,
+          permDeleteUsers: true,
+          permManageLinks: true,
+          permManageSettings: true,
+          permToggleMaintenance: true,
+        },
+      })
+    : null;
+
+  return normalizeAdminClaims(user);
+}
+
+function applyClaimsToToken(token: JWT, claims: AdminPermissionClaims & { role: UserRole }) {
+  token.role = claims.role;
+  for (const field of ADMIN_PERMISSION_FIELDS) {
+    token[field] = claims[field];
+  }
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -79,6 +180,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             image: true,
             passwordHash: true,
             isBanned: true,
+            role: true,
+            permManageUsers: true,
+            permDeleteUsers: true,
+            permManageLinks: true,
+            permManageSettings: true,
+            permToggleMaintenance: true,
           },
         });
 
@@ -107,6 +214,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           email: user.email,
           image: user.image,
+          role: user.role === "ADMIN" ? "ADMIN" : "USER",
+          permManageUsers: user.permManageUsers,
+          permDeleteUsers: user.permDeleteUsers,
+          permManageLinks: user.permManageLinks,
+          permManageSettings: user.permManageSettings,
+          permToggleMaintenance: user.permToggleMaintenance,
         };
       },
     }),
@@ -186,13 +299,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     /**
      * Enrich the JWT with the user's database ID and provider info.
      */
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
       if (user) {
         token.id = String(user.id);
+        applyClaimsToToken(
+          token,
+          await loadUserAdminClaims(String(user.id), user.email ?? token.email)
+        );
+      } else if (token.id && (!token.role || trigger === "update")) {
+        applyClaimsToToken(
+          token,
+          await loadUserAdminClaims(token.id, token.email)
+        );
       }
+
       if (account) {
         token.provider = account.provider;
       }
+
+      token.role ??= "USER";
+      for (const field of ADMIN_PERMISSION_FIELDS) {
+        token[field] ??= EMPTY_ADMIN_PERMISSIONS[field];
+      }
+
       return token;
     },
 
@@ -202,6 +331,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.role = token.role === "ADMIN" ? "ADMIN" : "USER";
+        session.user.permManageUsers = token.permManageUsers === true;
+        session.user.permDeleteUsers = token.permDeleteUsers === true;
+        session.user.permManageLinks = token.permManageLinks === true;
+        session.user.permManageSettings = token.permManageSettings === true;
+        session.user.permToggleMaintenance =
+          token.permToggleMaintenance === true;
       }
       return session;
     },

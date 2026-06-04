@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function deleteGlobalLink(linkId: string) {
-  await requireAdminActionSession();
+  await requireAdminActionSession("permManageLinks");
 
   const link = await prisma.link.findUnique({
     where: { id: linkId },

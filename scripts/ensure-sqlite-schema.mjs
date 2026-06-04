@@ -54,6 +54,12 @@ async function main() {
         "allowCustomCSS" BOOLEAN NOT NULL DEFAULT true,
         "allowCustomFont" BOOLEAN NOT NULL DEFAULT true,
         "allowTips" BOOLEAN NOT NULL DEFAULT true,
+        "role" TEXT NOT NULL DEFAULT 'USER',
+        "permManageUsers" BOOLEAN NOT NULL DEFAULT false,
+        "permDeleteUsers" BOOLEAN NOT NULL DEFAULT false,
+        "permManageLinks" BOOLEAN NOT NULL DEFAULT false,
+        "permManageSettings" BOOLEAN NOT NULL DEFAULT false,
+        "permToggleMaintenance" BOOLEAN NOT NULL DEFAULT false,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -68,6 +74,32 @@ async function main() {
   await addColumn("User", "allowCustomCSS", "BOOLEAN NOT NULL DEFAULT true");
   await addColumn("User", "allowCustomFont", "BOOLEAN NOT NULL DEFAULT true");
   await addColumn("User", "allowTips", "BOOLEAN NOT NULL DEFAULT true");
+  await addColumn("User", "role", "TEXT NOT NULL DEFAULT 'USER'");
+  await addColumn(
+    "User",
+    "permManageUsers",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn(
+    "User",
+    "permDeleteUsers",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn(
+    "User",
+    "permManageLinks",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn(
+    "User",
+    "permManageSettings",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn(
+    "User",
+    "permToggleMaintenance",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "AdminUser" (
@@ -203,6 +235,10 @@ async function main() {
   await createIndex(
     "User_customDomain_key",
     'CREATE UNIQUE INDEX "User_customDomain_key" ON "User"("customDomain")'
+  );
+  await createIndex(
+    "User_role_idx",
+    'CREATE INDEX "User_role_idx" ON "User"("role")'
   );
   await createIndex(
     "AdminUser_email_key",

@@ -1,3 +1,4 @@
+import { getAdminActor } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
 import {
   Ban,
@@ -5,12 +6,20 @@ import {
   Edit3,
   ExternalLink,
   FileCode2,
+  ShieldCheck,
   ShieldAlert,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { AdminPermissionsModal } from "./admin-permissions-modal";
 import { DeleteUserButton } from "./delete-user-button";
-import { deleteUser, toggleUserBan, toggleUserPermission } from "./user-actions";
+import {
+  deleteUser,
+  toggleAdminRole,
+  toggleUserBan,
+  toggleUserPermission,
+} from "./user-actions";
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   year: "numeric",
@@ -51,6 +60,12 @@ function TogglePill({
 }
 
 export default async function AdminUsersPage() {
+  const actor = await getAdminActor();
+
+  if (!actor?.permissions.permManageUsers) {
+    notFound();
+  }
+
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
     select: {
@@ -65,10 +80,17 @@ export default async function AdminUsersPage() {
       allowCustomCSS: true,
       allowCustomFont: true,
       allowTips: true,
+      role: true,
+      permManageUsers: true,
+      permDeleteUsers: true,
+      permManageLinks: true,
+      permManageSettings: true,
+      permToggleMaintenance: true,
       createdAt: true,
     },
   });
   const origin = getOrigin();
+  const isSuperAdmin = actor.type === "SUPER_ADMIN";
 
   return (
     <div className="space-y-6">
@@ -134,9 +156,17 @@ export default async function AdminUsersPage() {
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-white/85">
-                            {displayName}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="truncate text-sm font-medium text-white/85">
+                              {displayName}
+                            </p>
+                            {user.role === "ADMIN" && (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/20 bg-amber-400/10 px-2 py-0.5 text-[11px] text-amber-100">
+                                <ShieldCheck className="h-3 w-3" />
+                                ADMIN
+                              </span>
+                            )}
+                          </div>
                           <p className="truncate text-xs text-white/38">
                             {user.email ?? "未绑定邮箱"}
                           </p>
@@ -242,39 +272,84 @@ export default async function AdminUsersPage() {
 
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
-                        <Link
-                          href={`/sys-admin/users/${user.id}/edit`}
-                          className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100 transition hover:border-cyan-300/35 hover:bg-cyan-400/15"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                          代管
-                        </Link>
-                        <form
-                          action={async () => {
-                            "use server";
-                            await toggleUserBan(user.id);
-                          }}
-                        >
-                          <button
-                            type="submit"
-                            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
-                              user.isBanned
-                                ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/15"
-                                : "border-red-400/20 bg-red-500/10 text-red-200 hover:bg-red-500/15"
-                            }`}
+                        {isSuperAdmin && (
+                          <>
+                            <form
+                              action={async () => {
+                                "use server";
+                                await toggleAdminRole(user.id);
+                              }}
+                            >
+                              <button
+                                type="submit"
+                                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+                                  user.role === "ADMIN"
+                                    ? "border-white/10 bg-white/[0.04] text-white/55 hover:bg-white/[0.08]"
+                                    : "border-amber-300/20 bg-amber-400/10 text-amber-100 hover:bg-amber-400/15"
+                                }`}
+                              >
+                                <ShieldCheck className="h-4 w-4" />
+                                {user.role === "ADMIN"
+                                  ? "撤销管理员"
+                                  : "设为管理员"}
+                              </button>
+                            </form>
+                            {user.role === "ADMIN" && (
+                              <AdminPermissionsModal
+                                userId={user.id}
+                                label={displayName}
+                                initialPermissions={{
+                                  permManageUsers: user.permManageUsers,
+                                  permDeleteUsers: user.permDeleteUsers,
+                                  permManageLinks: user.permManageLinks,
+                                  permManageSettings:
+                                    user.permManageSettings,
+                                  permToggleMaintenance:
+                                    user.permToggleMaintenance,
+                                }}
+                              />
+                            )}
+                          </>
+                        )}
+                        {actor.permissions.permManageUsers && (
+                          <>
+                            <Link
+                              href={`/sys-admin/users/${user.id}/edit`}
+                              className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100 transition hover:border-cyan-300/35 hover:bg-cyan-400/15"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                              代管
+                            </Link>
+                            <form
+                              action={async () => {
+                                "use server";
+                                await toggleUserBan(user.id);
+                              }}
+                            >
+                              <button
+                                type="submit"
+                                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+                                  user.isBanned
+                                    ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/15"
+                                    : "border-red-400/20 bg-red-500/10 text-red-200 hover:bg-red-500/15"
+                                }`}
+                              >
+                                <Ban className="h-4 w-4" />
+                                {user.isBanned ? "解封" : "封禁"}
+                              </button>
+                            </form>
+                          </>
+                        )}
+                        {actor.permissions.permDeleteUsers && (
+                          <form
+                            action={async () => {
+                              "use server";
+                              await deleteUser(user.id);
+                            }}
                           >
-                            <Ban className="h-4 w-4" />
-                            {user.isBanned ? "解封" : "封禁"}
-                          </button>
-                        </form>
-                        <form
-                          action={async () => {
-                            "use server";
-                            await deleteUser(user.id);
-                          }}
-                        >
-                          <DeleteUserButton label={displayName} />
-                        </form>
+                            <DeleteUserButton label={displayName} />
+                          </form>
+                        )}
                       </div>
                     </td>
                   </tr>

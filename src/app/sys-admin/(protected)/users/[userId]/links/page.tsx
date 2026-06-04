@@ -1,3 +1,4 @@
+import { getAdminActor } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
 import {
   ArrowLeft,
@@ -26,6 +27,12 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
 });
 
 export default async function ManagedUserLinksPage({ params }: Props) {
+  const actor = await getAdminActor();
+
+  if (!actor?.permissions.permManageUsers) {
+    notFound();
+  }
+
   const { userId } = await params;
   const user = await prisma.user.findUnique({
     where: { id: userId },

@@ -1,3 +1,4 @@
+import { getAdminActor } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
 import {
   AlertTriangle,
@@ -7,6 +8,7 @@ import {
   ShieldAlert,
   UserRound,
 } from "lucide-react";
+import { notFound } from "next/navigation";
 import { DeleteLinkButton } from "./delete-link-button";
 import { deleteGlobalLink } from "./link-actions";
 
@@ -23,6 +25,12 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
 });
 
 export default async function AdminLinksReviewPage({ searchParams }: Props) {
+  const actor = await getAdminActor();
+
+  if (!actor?.permissions.permManageLinks) {
+    notFound();
+  }
+
   const { q } = await searchParams;
   const query = q?.trim() ?? "";
 

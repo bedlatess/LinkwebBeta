@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function cleanupExpiredSessions() {
-  await requireAdminActionSession();
+  await requireAdminActionSession("permManageUsers");
 
   await prisma.session.deleteMany({
     where: {
@@ -19,7 +19,7 @@ export async function cleanupExpiredSessions() {
 }
 
 export async function cleanupEmptyLinks() {
-  await requireAdminActionSession();
+  await requireAdminActionSession("permManageUsers");
 
   await prisma.link.deleteMany({
     where: {
