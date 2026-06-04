@@ -5,6 +5,8 @@ import { AdminLoginForm } from "./admin-login-form";
 export const dynamic = "force-dynamic";
 
 export default function AdminLoginPage() {
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 text-white">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -26,7 +28,7 @@ export default function AdminLoginPage() {
             <div className="h-32 animate-pulse rounded-xl bg-white/[0.04]" />
           }
         >
-          <AdminLoginForm />
+          <AdminLoginForm turnstileSiteKey={turnstileSiteKey} />
         </Suspense>
       </section>
     </main>

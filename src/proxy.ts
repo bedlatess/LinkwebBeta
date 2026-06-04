@@ -47,7 +47,22 @@ export default auth(async (req) => {
     }
 
     const adminSession = await verifyAdminSessionFromRequest(req);
-    const hasNormalAdminSession = req.auth?.user?.role === "ADMIN";
+    const normalSessionUserId = req.auth?.user?.id;
+    let hasNormalAdminSession = false;
+
+    if (normalSessionUserId) {
+      try {
+        const user = await getPrisma().user.findUnique({
+          where: { id: normalSessionUserId },
+          select: { role: true, isBanned: true },
+        });
+
+        hasNormalAdminSession =
+          user?.role === "ADMIN" && user.isBanned !== true;
+      } catch {
+        hasNormalAdminSession = false;
+      }
+    }
 
     if (!adminSession && !hasNormalAdminSession) {
       if (pathname.startsWith("/sys-admin/api")) {

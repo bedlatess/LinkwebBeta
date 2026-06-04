@@ -68,12 +68,30 @@ export async function getAdminActor(): Promise<AdminActor | null> {
 
   const session = await auth();
 
-  if (session?.user?.id && session.user.role === "ADMIN") {
+  if (session?.user?.id) {
+    const freshUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        email: true,
+        role: true,
+        isBanned: true,
+        permManageUsers: true,
+        permDeleteUsers: true,
+        permManageLinks: true,
+        permManageSettings: true,
+        permToggleMaintenance: true,
+      },
+    });
+
+    if (!freshUser || freshUser.isBanned || freshUser.role !== "ADMIN") {
+      return null;
+    }
+
     return {
       type: "NORMAL_ADMIN",
       userId: session.user.id,
-      email: session.user.email,
-      permissions: mapSessionPermissions(session.user),
+      email: freshUser.email ?? session.user.email,
+      permissions: mapSessionPermissions(freshUser),
     };
   }
 
