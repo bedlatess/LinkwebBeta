@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRef, useState } from "react";
 import {
   Check,
@@ -20,6 +19,19 @@ interface Props {
   username: string;
   initialImage: string | null;
   initialDomain: string | null;
+}
+
+async function readJsonResponse<T extends Record<string, unknown>>(
+  res: Response
+): Promise<T> {
+  const text = await res.text();
+  if (!text) return {} as T;
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return {} as T;
+  }
 }
 
 export function SettingsClient({
@@ -53,7 +65,10 @@ export function SettingsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: nextImage.trim() }),
       });
-      const data = await res.json();
+      const data = await readJsonResponse<{
+        error?: string;
+        image?: string | null;
+      }>(res);
       if (!res.ok) throw new Error(data.error ?? "头像保存失败");
       setSavedAvatar(data.image ?? "");
       setAvatarUrl(data.image ?? "");
@@ -79,7 +94,10 @@ export function SettingsClient({
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
+      const data = await readJsonResponse<{
+        error?: string;
+        image?: string | null;
+      }>(res);
       if (!res.ok) throw new Error(data.error ?? "头像上传失败");
       setAvatarUrl(data.image ?? "");
       setSavedAvatar(data.image ?? "");
@@ -105,10 +123,14 @@ export function SettingsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ domain: cleanDomain }),
       });
-      const data = await res.json();
+      const data = await readJsonResponse<{
+        error?: string;
+        customDomain?: string | null;
+      }>(res);
       if (!res.ok) throw new Error(data.error ?? "操作失败");
-      setCurrentDomain(data.customDomain);
-      setDomain(data.customDomain ?? "");
+      const nextCustomDomain = data.customDomain ?? null;
+      setCurrentDomain(nextCustomDomain);
+      setDomain(nextCustomDomain ?? "");
       setSaved(true);
       setTimeout(() => setSaved(false), 2200);
     } catch (error) {
@@ -126,13 +148,23 @@ export function SettingsClient({
         <div className="flex items-start gap-4">
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-3xl border border-cyan-300/20 bg-cyan-300/10">
             {savedAvatar ? (
-              <Image
-                src={savedAvatar}
-                alt=""
-                width={80}
-                height={80}
-                className="h-full w-full object-cover"
-              />
+              <>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <User className="h-8 w-8 text-white/35" />
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={savedAvatar}
+                  alt=""
+                  className="relative h-full w-full object-cover"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                  onLoad={(event) => {
+                    event.currentTarget.style.display = "block";
+                  }}
+                />
+              </>
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <User className="h-8 w-8 text-white/35" />

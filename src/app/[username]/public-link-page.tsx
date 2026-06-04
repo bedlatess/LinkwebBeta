@@ -14,7 +14,6 @@
 
 import { getLinkIconOption } from "@/lib/link-icons";
 import { ExternalLink, Globe, Coffee, X, Copy, Check, Heart } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useState } from "react";
 
 interface LinkData {
@@ -142,13 +141,29 @@ export function PublicLinkPage({
         {/* Avatar */}
         <div className="mb-4">
           {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt={displayName}
-              width={80}
-              height={80}
-              className={`h-20 w-20 rounded-full object-cover ring-2 ${avatarRing}`}
-            />
+            <div
+              className={`relative h-20 w-20 overflow-hidden rounded-full ring-2 ${avatarRing}`}
+            >
+              <div className={`absolute inset-0 flex items-center justify-center ${cardBg}`}>
+                <Globe
+                  className={`h-8 w-8 ${
+                    isDarkBg ? "text-white/25" : "text-slate-400"
+                  }`}
+                />
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                className="relative h-full w-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+                onLoad={(event) => {
+                  event.currentTarget.style.display = "block";
+                }}
+              />
+            </div>
           ) : (
             <div
             className={`flex h-20 w-20 items-center justify-center rounded-3xl ${cardBg} ring-2 ${avatarRing}`}

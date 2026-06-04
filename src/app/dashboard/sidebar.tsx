@@ -1,7 +1,6 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -108,13 +107,23 @@ export function Sidebar({ userName, userEmail, userImage }: SidebarProps) {
         >
           <div className="flex min-w-0 items-center gap-3">
             {userImage ? (
-              <Image
-                src={userImage}
-                alt=""
-                width={40}
-                height={40}
-                className="h-10 w-10 shrink-0 rounded-2xl object-cover ring-1 ring-white/10"
-              />
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <User className="h-4 w-4 text-white/35" />
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={userImage}
+                  alt=""
+                  className="relative h-full w-full object-cover"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                  onLoad={(event) => {
+                    event.currentTarget.style.display = "block";
+                  }}
+                />
+              </div>
             ) : (
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
                 <User className="h-4 w-4 text-white/35" />
