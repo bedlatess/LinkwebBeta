@@ -70,3 +70,23 @@ export async function toggleOauthEnabled() {
   revalidatePath("/sys-admin/settings");
   revalidatePath("/auth/signin");
 }
+
+export async function toggleMaintenanceMode() {
+  await requireAdminActionSession();
+
+  const settings = await prisma.siteSettings.upsert({
+    where: { id: "global" },
+    create: { id: "global" },
+    update: {},
+    select: { isMaintenanceMode: true },
+  });
+
+  await prisma.siteSettings.update({
+    where: { id: "global" },
+    data: { isMaintenanceMode: !settings.isMaintenanceMode },
+  });
+
+  revalidatePath("/sys-admin/settings");
+  revalidatePath("/");
+  revalidatePath("/auth/signin");
+}

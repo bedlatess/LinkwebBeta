@@ -38,6 +38,25 @@ export async function toggleUserBan(userId: string) {
   revalidatePath("/sys-admin/users");
 }
 
+export async function deleteUser(userId: string) {
+  await requireAdminActionSession();
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  await prisma.user.delete({
+    where: { id: userId },
+  });
+
+  revalidatePath("/sys-admin/users");
+}
+
 export async function toggleUserPermission(
   userId: string,
   field: PermissionField

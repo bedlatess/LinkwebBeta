@@ -91,9 +91,15 @@ async function main() {
       "seoDescription" TEXT NOT NULL DEFAULT 'Self-hosted link-in-bio platform',
       "registrationEnabled" BOOLEAN NOT NULL DEFAULT true,
       "oauthEnabled" BOOLEAN NOT NULL DEFAULT true,
+      "isMaintenanceMode" BOOLEAN NOT NULL DEFAULT false,
       "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await addColumn(
+    "SiteSettings",
+    "isMaintenanceMode",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "Account" (

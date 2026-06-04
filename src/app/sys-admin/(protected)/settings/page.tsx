@@ -1,5 +1,6 @@
 import { getGlobalSiteSettings } from "@/lib/site-settings";
 import {
+  AlertTriangle,
   Globe2,
   LockKeyhole,
   Save,
@@ -8,6 +9,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import {
+  toggleMaintenanceMode,
   toggleOauthEnabled,
   toggleRegistrationEnabled,
   updateSiteBasics,
@@ -37,13 +39,22 @@ function FeatureFlagCard({
   enabled,
   action,
   icon: Icon,
+  tone = "emerald",
 }: {
   title: string;
   description: string;
   enabled: boolean;
   action: () => Promise<void>;
   icon: typeof UserPlus;
+  tone?: "emerald" | "amber";
 }) {
+  const enabledClass =
+    tone === "amber"
+      ? "border-amber-300/25 bg-amber-400/12 text-amber-200"
+      : "border-emerald-300/20 bg-emerald-400/12 text-emerald-300";
+  const enabledTextClass =
+    tone === "amber" ? "text-amber-200" : "text-emerald-200";
+
   return (
     <form action={action}>
       <button
@@ -54,7 +65,7 @@ function FeatureFlagCard({
           <div
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${
               enabled
-                ? "border-emerald-300/20 bg-emerald-400/12 text-emerald-300"
+                ? enabledClass
                 : "border-white/10 bg-white/[0.04] text-white/35"
             }`}
           >
@@ -70,7 +81,7 @@ function FeatureFlagCard({
         <div className="flex shrink-0 items-center gap-3">
           <span
             className={`text-xs font-medium ${
-              enabled ? "text-emerald-200" : "text-white/35"
+              enabled ? enabledTextClass : "text-white/35"
             }`}
           >
             {enabled ? "已开启" : "已关闭"}
@@ -171,6 +182,14 @@ export default async function AdminSettingsPage() {
         </form>
 
         <div className="space-y-4">
+          <FeatureFlagCard
+            title="站点维护模式"
+            description="开启后，除 /sys-admin 后台外，首页、登录页、公开主页和普通 API 将统一返回 503 维护页。"
+            enabled={settings.isMaintenanceMode}
+            action={toggleMaintenanceMode}
+            icon={AlertTriangle}
+            tone="amber"
+          />
           <FeatureFlagCard
             title="新用户注册通道"
             description="关闭后，注册 API 将返回 403，前台注册入口也会消失。"

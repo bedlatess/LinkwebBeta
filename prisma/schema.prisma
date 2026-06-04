@@ -63,6 +63,7 @@ model SiteSettings {
   seoDescription      String   @default("Self-hosted link-in-bio platform")
   registrationEnabled Boolean  @default(true)
   oauthEnabled        Boolean  @default(true)
+  isMaintenanceMode   Boolean  @default(false)
   updatedAt           DateTime @updatedAt
 }
 

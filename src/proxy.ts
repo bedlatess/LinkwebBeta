@@ -58,6 +58,37 @@ export default auth(async (req) => {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  //  Global Maintenance Mode (admin routes stay reachable)
+  // ═══════════════════════════════════════════════════════════════
+  const isMaintenancePage = pathname === "/maintenance";
+  const isNextAsset =
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/robots.txt") ||
+    pathname.startsWith("/sitemap.xml");
+
+  if (!isMaintenancePage && !isNextAsset) {
+    try {
+      const settings = await getPrisma().siteSettings.findUnique({
+        where: { id: "global" },
+        select: { isMaintenanceMode: true },
+      });
+
+      if (settings?.isMaintenanceMode) {
+        const response = NextResponse.rewrite(
+          new URL("/maintenance", req.url),
+          { status: 503 }
+        );
+        response.headers.set("Retry-After", "3600");
+        return response;
+      }
+    } catch {
+      // If the settings table is missing during migration/bootstrap, keep
+      // serving traffic instead of taking the whole site down.
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   //  Custom Domain Rewrite (White-label)
   // ═══════════════════════════════════════════════════════════════
   if (host !== mainHost && !host.startsWith("localhost")) {

@@ -2,12 +2,15 @@ import { prisma } from "@/lib/prisma";
 import {
   Ban,
   CheckCircle2,
+  Edit3,
   ExternalLink,
   FileCode2,
   ShieldAlert,
   UserRound,
 } from "lucide-react";
-import { toggleUserBan, toggleUserPermission } from "./user-actions";
+import Link from "next/link";
+import { DeleteUserButton } from "./delete-user-button";
+import { deleteUser, toggleUserBan, toggleUserPermission } from "./user-actions";
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   year: "numeric",
@@ -238,7 +241,14 @@ export default async function AdminUsersPage() {
                     </td>
 
                     <td className="px-5 py-4">
-                      <div className="flex justify-end">
+                      <div className="flex justify-end gap-2">
+                        <Link
+                          href={`/sys-admin/users/${user.id}/edit`}
+                          className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100 transition hover:border-cyan-300/35 hover:bg-cyan-400/15"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                          代管
+                        </Link>
                         <form
                           action={async () => {
                             "use server";
@@ -256,6 +266,14 @@ export default async function AdminUsersPage() {
                             <Ban className="h-4 w-4" />
                             {user.isBanned ? "解封" : "封禁"}
                           </button>
+                        </form>
+                        <form
+                          action={async () => {
+                            "use server";
+                            await deleteUser(user.id);
+                          }}
+                        >
+                          <DeleteUserButton label={displayName} />
                         </form>
                       </div>
                     </td>

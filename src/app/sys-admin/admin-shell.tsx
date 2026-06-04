@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AlertTriangle,
   BarChart3,
   LogOut,
   Menu,
@@ -18,6 +19,7 @@ import { useState } from "react";
 const navItems = [
   { href: "/sys-admin", label: "仪表盘", icon: BarChart3 },
   { href: "/sys-admin/users", label: "用户管理", icon: Users },
+  { href: "/sys-admin/links", label: "内容审查", icon: AlertTriangle },
   { href: "/sys-admin/settings", label: "全局设置", icon: Settings },
   { href: "/sys-admin/maintenance", label: "系统维护", icon: Wrench },
 ];
