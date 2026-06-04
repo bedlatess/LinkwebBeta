@@ -119,8 +119,11 @@ function FeatureFlagCard({
 
 export default async function AdminSettingsPage() {
   const actor = await getAdminActor();
+  const canManageSiteSettings = actor?.permissions.permManageSiteSettings;
+  const canManageAuthSettings = actor?.permissions.permManageAuthSettings;
+  const canToggleMaintenance = actor?.permissions.permToggleMaintenance;
 
-  if (!actor?.permissions.permManageSettings) {
+  if (!canManageSiteSettings && !canManageAuthSettings && !canToggleMaintenance) {
     notFound();
   }
 
@@ -150,7 +153,9 @@ export default async function AdminSettingsPage() {
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <form
           action={updateSiteBasics}
-          className="rounded-2xl border border-white/10 bg-white/[0.035] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl"
+          className={`rounded-2xl border border-white/10 bg-white/[0.035] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl ${
+            canManageSiteSettings ? "" : "opacity-55"
+          }`}
         >
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-400/12 text-cyan-300">
@@ -180,6 +185,7 @@ export default async function AdminSettingsPage() {
                 name="siteTitle"
                 defaultValue={settings.siteTitle}
                 required
+                disabled={!canManageSiteSettings}
                 className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/10"
               />
             </div>
@@ -197,6 +203,7 @@ export default async function AdminSettingsPage() {
                 name="seoDescription"
                 defaultValue={settings.seoDescription}
                 rows={5}
+                disabled={!canManageSiteSettings}
                 className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/10"
               />
             </div>
@@ -216,6 +223,7 @@ export default async function AdminSettingsPage() {
                   type="email"
                   defaultValue={settings.supportEmail ?? ""}
                   placeholder="support@example.com"
+                  disabled={!canManageSiteSettings}
                   className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/10"
                 />
               </div>
@@ -233,6 +241,7 @@ export default async function AdminSettingsPage() {
                   name="githubUrl"
                   defaultValue={settings.githubUrl}
                   placeholder="https://github.com/..."
+                  disabled={!canManageSiteSettings}
                   className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/10"
                 />
               </div>
@@ -250,6 +259,7 @@ export default async function AdminSettingsPage() {
                 id="footerText"
                 name="footerText"
                 defaultValue={settings.footerText}
+                disabled={!canManageSiteSettings}
                 className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/10"
               />
             </div>
@@ -273,6 +283,7 @@ export default async function AdminSettingsPage() {
                   type="checkbox"
                   name="announcementEnabled"
                   defaultChecked={settings.announcementEnabled}
+                  disabled={!canManageSiteSettings}
                   className="h-4 w-4 shrink-0 accent-emerald-300"
                 />
               </label>
@@ -282,12 +293,14 @@ export default async function AdminSettingsPage() {
                 defaultValue={settings.announcementText ?? ""}
                 rows={3}
                 placeholder="例如：LinkWeb Beta 正在开放邀请测试。"
+                disabled={!canManageSiteSettings}
                 className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/20 focus:border-emerald-300/45 focus:ring-2 focus:ring-emerald-300/10"
               />
             </div>
 
             <button
               type="submit"
+              disabled={!canManageSiteSettings}
               className="inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-200"
             >
               <Save className="h-4 w-4" />
@@ -304,7 +317,7 @@ export default async function AdminSettingsPage() {
             action={toggleMaintenanceMode}
             icon={AlertTriangle}
             tone="amber"
-            disabled={!actor.permissions.permToggleMaintenance}
+            disabled={!canToggleMaintenance}
           />
           <FeatureFlagCard
             title="新用户注册通道"
@@ -312,6 +325,7 @@ export default async function AdminSettingsPage() {
             enabled={settings.registrationEnabled}
             action={toggleRegistrationEnabled}
             icon={UserPlus}
+            disabled={!canManageAuthSettings}
           />
           <FeatureFlagCard
             title="OAuth 社交登录"
@@ -319,6 +333,7 @@ export default async function AdminSettingsPage() {
             enabled={settings.oauthEnabled}
             action={toggleOauthEnabled}
             icon={LockKeyhole}
+            disabled={!canManageAuthSettings}
           />
         </div>
       </section>

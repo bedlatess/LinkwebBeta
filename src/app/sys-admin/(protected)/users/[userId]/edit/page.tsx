@@ -24,7 +24,7 @@ interface Props {
 export default async function ManagedUserEditPage({ params }: Props) {
   const actor = await getAdminActor();
 
-  if (!actor?.permissions.permManageUsers) {
+  if (!actor?.permissions.permEditUsers) {
     notFound();
   }
 
@@ -63,7 +63,7 @@ export default async function ManagedUserEditPage({ params }: Props) {
         <div className="mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-cyan-300/70">
-              Managed User
+              User Editor
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
               {displayName}
@@ -94,10 +94,10 @@ export default async function ManagedUserEditPage({ params }: Props) {
             </div>
             <div>
               <h2 className="text-base font-semibold text-white/85">
-                核心资料代管
+                核心资料编辑
               </h2>
               <p className="text-sm text-white/38">
-                管理用户公开身份、简介和赞助配置。
+                编辑用户公开身份、简介和赞助配置。
               </p>
             </div>
           </div>
@@ -179,7 +179,7 @@ export default async function ManagedUserEditPage({ params }: Props) {
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-200"
             >
               <Save className="h-4 w-4" />
-              保存代管资料
+              保存编辑资料
             </button>
           </div>
         </form>
@@ -219,39 +219,41 @@ export default async function ManagedUserEditPage({ params }: Props) {
             </div>
           </section>
 
-          <form
-            action={resetManagedUserPassword.bind(null, user.id)}
-            className="rounded-2xl border border-red-400/20 bg-red-500/[0.045] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl"
-          >
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-300/20 bg-red-400/12 text-red-200">
-                <KeyRound className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-base font-semibold text-red-100">
-                  强制重置密码
-                </h2>
-                <p className="text-sm text-red-100/45">
-                  会覆盖用户原密码，至少 12 个字符。
-                </p>
-              </div>
-            </div>
-            <input
-              name="password"
-              type="password"
-              minLength={12}
-              required
-              placeholder="输入新密码"
-              className="w-full rounded-xl border border-red-300/20 bg-slate-950/40 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-red-300/50 focus:ring-2 focus:ring-red-300/10"
-            />
-            <button
-              type="submit"
-              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-300/25 bg-red-500/20 px-4 py-2.5 text-sm font-semibold text-red-100 transition hover:bg-red-500/30"
+          {actor.permissions.permResetUserPasswords && (
+            <form
+              action={resetManagedUserPassword.bind(null, user.id)}
+              className="rounded-2xl border border-red-400/20 bg-red-500/[0.045] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl"
             >
-              <KeyRound className="h-4 w-4" />
-              确认重置密码
-            </button>
-          </form>
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-300/20 bg-red-400/12 text-red-200">
+                  <KeyRound className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-red-100">
+                    强制重置密码
+                  </h2>
+                  <p className="text-sm text-red-100/45">
+                    会覆盖用户原密码，至少 12 个字符。
+                  </p>
+                </div>
+              </div>
+              <input
+                name="password"
+                type="password"
+                minLength={12}
+                required
+                placeholder="输入新密码"
+                className="w-full rounded-xl border border-red-300/20 bg-slate-950/40 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-red-300/50 focus:ring-2 focus:ring-red-300/10"
+              />
+              <button
+                type="submit"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-300/25 bg-red-500/20 px-4 py-2.5 text-sm font-semibold text-red-100 transition hover:bg-red-500/30"
+              >
+                <KeyRound className="h-4 w-4" />
+                确认重置密码
+              </button>
+            </form>
+          )}
         </div>
       </section>
     </div>

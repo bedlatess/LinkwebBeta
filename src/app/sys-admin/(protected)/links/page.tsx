@@ -27,7 +27,7 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
 export default async function AdminLinksReviewPage({ searchParams }: Props) {
   const actor = await getAdminActor();
 
-  if (!actor?.permissions.permManageLinks) {
+  if (!actor?.permissions.permViewLinks) {
     notFound();
   }
 
@@ -188,14 +188,20 @@ export default async function AdminLinksReviewPage({ searchParams }: Props) {
 
                     <td className="px-5 py-4">
                       <div className="flex justify-end">
-                        <form
-                          action={async () => {
-                            "use server";
-                            await deleteGlobalLink(link.id);
-                          }}
-                        >
-                          <DeleteLinkButton title={link.title} />
-                        </form>
+                        {actor.permissions.permDeleteLinks ? (
+                          <form
+                            action={async () => {
+                              "use server";
+                              await deleteGlobalLink(link.id);
+                            }}
+                          >
+                            <DeleteLinkButton title={link.title} />
+                          </form>
+                        ) : (
+                          <span className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/32">
+                            只读
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>

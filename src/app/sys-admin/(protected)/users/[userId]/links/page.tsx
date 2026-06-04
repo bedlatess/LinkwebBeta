@@ -29,7 +29,7 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
 export default async function ManagedUserLinksPage({ params }: Props) {
   const actor = await getAdminActor();
 
-  if (!actor?.permissions.permManageUsers) {
+  if (!actor?.permissions.permEditUsers) {
     notFound();
   }
 
@@ -66,7 +66,7 @@ export default async function ManagedUserLinksPage({ params }: Props) {
           className="inline-flex items-center gap-2 text-sm text-white/45 transition hover:text-white/80"
         >
           <ArrowLeft className="h-4 w-4" />
-          返回上一页(代管面板)
+          返回上一页(编辑面板)
         </Link>
 
         <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -158,14 +158,20 @@ export default async function ManagedUserLinksPage({ params }: Props) {
 
                   <td className="px-5 py-4">
                     <div className="flex justify-end">
-                      <form
-                        action={async () => {
-                          "use server";
-                          await deleteGlobalLink(link.id);
-                        }}
-                      >
-                        <DeleteLinkButton title={link.title || link.url} />
-                      </form>
+                      {actor.permissions.permDeleteLinks ? (
+                        <form
+                          action={async () => {
+                            "use server";
+                            await deleteGlobalLink(link.id);
+                          }}
+                        >
+                          <DeleteLinkButton title={link.title || link.url} />
+                        </form>
+                      ) : (
+                        <span className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/32">
+                          只读
+                        </span>
+                      )}
                     </div>
                   </td>
                 </tr>

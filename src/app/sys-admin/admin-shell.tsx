@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { SuperAdminPasswordModal } from "./super-admin-password-modal";
 
 interface AdminShellProps {
   actor: AdminActor;
@@ -28,31 +29,35 @@ export function AdminShell({ actor, adminEmail, children }: AdminShellProps) {
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const canUseSettings =
+    actor.permissions.permManageSiteSettings ||
+    actor.permissions.permManageAuthSettings ||
+    actor.permissions.permToggleMaintenance;
   const navItems = [
     { href: "/sys-admin", label: "仪表盘", icon: BarChart3, visible: true },
     {
       href: "/sys-admin/users",
       label: "用户管理",
       icon: Users,
-      visible: actor.permissions.permManageUsers,
+      visible: actor.permissions.permViewUsers,
     },
     {
       href: "/sys-admin/links",
       label: "内容审查",
       icon: AlertTriangle,
-      visible: actor.permissions.permManageLinks,
+      visible: actor.permissions.permViewLinks,
     },
     {
       href: "/sys-admin/settings",
       label: "全局设置",
       icon: Settings,
-      visible: actor.permissions.permManageSettings,
+      visible: canUseSettings,
     },
     {
       href: "/sys-admin/maintenance",
       label: "数据清理",
       icon: Wrench,
-      visible: actor.permissions.permManageUsers,
+      visible: actor.permissions.permRunMaintenance,
     },
   ].filter((item) => item.visible);
 
@@ -119,6 +124,7 @@ export function AdminShell({ actor, adminEmail, children }: AdminShellProps) {
           <p className="mt-1 text-xs text-emerald-200/55">
             {actor.type === "SUPER_ADMIN" ? "Super Admin" : "Normal Admin"}
           </p>
+          {actor.type === "SUPER_ADMIN" && <SuperAdminPasswordModal />}
         </div>
       </div>
     </>

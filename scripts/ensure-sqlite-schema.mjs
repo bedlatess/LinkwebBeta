@@ -60,6 +60,16 @@ async function main() {
         "permManageLinks" BOOLEAN NOT NULL DEFAULT false,
         "permManageSettings" BOOLEAN NOT NULL DEFAULT false,
         "permToggleMaintenance" BOOLEAN NOT NULL DEFAULT false,
+        "permViewUsers" BOOLEAN NOT NULL DEFAULT false,
+        "permBanUsers" BOOLEAN NOT NULL DEFAULT false,
+        "permEditUsers" BOOLEAN NOT NULL DEFAULT false,
+        "permResetUserPasswords" BOOLEAN NOT NULL DEFAULT false,
+        "permManageUserEntitlements" BOOLEAN NOT NULL DEFAULT false,
+        "permViewLinks" BOOLEAN NOT NULL DEFAULT false,
+        "permDeleteLinks" BOOLEAN NOT NULL DEFAULT false,
+        "permManageSiteSettings" BOOLEAN NOT NULL DEFAULT false,
+        "permManageAuthSettings" BOOLEAN NOT NULL DEFAULT false,
+        "permRunMaintenance" BOOLEAN NOT NULL DEFAULT false,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -98,6 +108,36 @@ async function main() {
   await addColumn(
     "User",
     "permToggleMaintenance",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn("User", "permViewUsers", "BOOLEAN NOT NULL DEFAULT false");
+  await addColumn("User", "permBanUsers", "BOOLEAN NOT NULL DEFAULT false");
+  await addColumn("User", "permEditUsers", "BOOLEAN NOT NULL DEFAULT false");
+  await addColumn(
+    "User",
+    "permResetUserPasswords",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn(
+    "User",
+    "permManageUserEntitlements",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn("User", "permViewLinks", "BOOLEAN NOT NULL DEFAULT false");
+  await addColumn("User", "permDeleteLinks", "BOOLEAN NOT NULL DEFAULT false");
+  await addColumn(
+    "User",
+    "permManageSiteSettings",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn(
+    "User",
+    "permManageAuthSettings",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn(
+    "User",
+    "permRunMaintenance",
     "BOOLEAN NOT NULL DEFAULT false"
   );
 

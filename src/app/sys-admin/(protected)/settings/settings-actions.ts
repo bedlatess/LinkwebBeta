@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
 export async function updateSiteBasics(formData: FormData) {
-  await requireAdminActionSession("permManageSettings");
+  await requireAdminActionSession("permManageSiteSettings");
 
   const siteTitle = String(formData.get("siteTitle") ?? "").trim();
   const seoDescription = String(formData.get("seoDescription") ?? "").trim();
@@ -52,7 +52,7 @@ export async function updateSiteBasics(formData: FormData) {
 }
 
 export async function toggleRegistrationEnabled() {
-  await requireAdminActionSession("permManageSettings");
+  await requireAdminActionSession("permManageAuthSettings");
 
   const settings = await prisma.siteSettings.upsert({
     where: { id: "global" },
@@ -71,7 +71,7 @@ export async function toggleRegistrationEnabled() {
 }
 
 export async function toggleOauthEnabled() {
-  await requireAdminActionSession("permManageSettings");
+  await requireAdminActionSession("permManageAuthSettings");
 
   const settings = await prisma.siteSettings.upsert({
     where: { id: "global" },

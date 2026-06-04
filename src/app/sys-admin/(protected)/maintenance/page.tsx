@@ -94,7 +94,7 @@ function DangerCard({
 export default async function AdminMaintenancePage() {
   const actor = await getAdminActor();
 
-  if (!actor?.permissions.permManageUsers) {
+  if (!actor?.permissions.permRunMaintenance) {
     notFound();
   }
 

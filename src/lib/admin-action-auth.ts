@@ -31,6 +31,16 @@ export const ALL_ADMIN_PERMISSIONS: AdminPermissions = {
   permManageLinks: true,
   permManageSettings: true,
   permToggleMaintenance: true,
+  permViewUsers: true,
+  permBanUsers: true,
+  permEditUsers: true,
+  permResetUserPasswords: true,
+  permManageUserEntitlements: true,
+  permViewLinks: true,
+  permDeleteLinks: true,
+  permManageSiteSettings: true,
+  permManageAuthSettings: true,
+  permRunMaintenance: true,
 };
 
 function mapSessionPermissions(sessionUser: {
@@ -39,13 +49,43 @@ function mapSessionPermissions(sessionUser: {
   permManageLinks?: boolean;
   permManageSettings?: boolean;
   permToggleMaintenance?: boolean;
+  permViewUsers?: boolean;
+  permBanUsers?: boolean;
+  permEditUsers?: boolean;
+  permResetUserPasswords?: boolean;
+  permManageUserEntitlements?: boolean;
+  permViewLinks?: boolean;
+  permDeleteLinks?: boolean;
+  permManageSiteSettings?: boolean;
+  permManageAuthSettings?: boolean;
+  permRunMaintenance?: boolean;
 }): AdminPermissions {
+  const legacyManageUsers = sessionUser.permManageUsers === true;
+  const legacyManageLinks = sessionUser.permManageLinks === true;
+  const legacyManageSettings = sessionUser.permManageSettings === true;
+
   return {
     permManageUsers: sessionUser.permManageUsers === true,
     permDeleteUsers: sessionUser.permDeleteUsers === true,
     permManageLinks: sessionUser.permManageLinks === true,
     permManageSettings: sessionUser.permManageSettings === true,
     permToggleMaintenance: sessionUser.permToggleMaintenance === true,
+    permViewUsers: sessionUser.permViewUsers === true || legacyManageUsers,
+    permBanUsers: sessionUser.permBanUsers === true || legacyManageUsers,
+    permEditUsers: sessionUser.permEditUsers === true || legacyManageUsers,
+    permResetUserPasswords:
+      sessionUser.permResetUserPasswords === true || legacyManageUsers,
+    permManageUserEntitlements:
+      sessionUser.permManageUserEntitlements === true || legacyManageUsers,
+    permViewLinks: sessionUser.permViewLinks === true || legacyManageLinks,
+    permDeleteLinks:
+      sessionUser.permDeleteLinks === true || legacyManageLinks,
+    permManageSiteSettings:
+      sessionUser.permManageSiteSettings === true || legacyManageSettings,
+    permManageAuthSettings:
+      sessionUser.permManageAuthSettings === true || legacyManageSettings,
+    permRunMaintenance:
+      sessionUser.permRunMaintenance === true || legacyManageUsers,
   };
 }
 
@@ -80,6 +120,16 @@ export async function getAdminActor(): Promise<AdminActor | null> {
         permManageLinks: true,
         permManageSettings: true,
         permToggleMaintenance: true,
+        permViewUsers: true,
+        permBanUsers: true,
+        permEditUsers: true,
+        permResetUserPasswords: true,
+        permManageUserEntitlements: true,
+        permViewLinks: true,
+        permDeleteLinks: true,
+        permManageSiteSettings: true,
+        permManageAuthSettings: true,
+        permRunMaintenance: true,
       },
     });
 
@@ -121,6 +171,16 @@ export async function requireAdminActionSession(
       permManageLinks: true,
       permManageSettings: true,
       permToggleMaintenance: true,
+      permViewUsers: true,
+      permBanUsers: true,
+      permEditUsers: true,
+      permResetUserPasswords: true,
+      permManageUserEntitlements: true,
+      permViewLinks: true,
+      permDeleteLinks: true,
+      permManageSiteSettings: true,
+      permManageAuthSettings: true,
+      permRunMaintenance: true,
     },
   });
 

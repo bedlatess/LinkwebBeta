@@ -20,13 +20,23 @@ const ADMIN_PERMISSION_FIELDS = [
   "permManageLinks",
   "permManageSettings",
   "permToggleMaintenance",
+  "permViewUsers",
+  "permBanUsers",
+  "permEditUsers",
+  "permResetUserPasswords",
+  "permManageUserEntitlements",
+  "permViewLinks",
+  "permDeleteLinks",
+  "permManageSiteSettings",
+  "permManageAuthSettings",
+  "permRunMaintenance",
 ] as const satisfies readonly AdminPermissionField[];
 
 type UserPermissionField = (typeof USER_PERMISSION_FIELDS)[number];
 export type AdminPermissionInput = Record<AdminPermissionField, boolean>;
 
 export async function toggleUserBan(userId: string) {
-  await requireAdminActionSession("permManageUsers");
+  await requireAdminActionSession("permBanUsers");
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -74,7 +84,7 @@ export async function toggleUserPermission(
   userId: string,
   field: UserPermissionField
 ) {
-  await requireAdminActionSession("permManageUsers");
+  await requireAdminActionSession("permManageUserEntitlements");
 
   if (!USER_PERMISSION_FIELDS.includes(field)) {
     throw new Error("Invalid permission field");
@@ -125,6 +135,16 @@ export async function toggleAdminRole(targetUserId: string) {
           permManageLinks: false,
           permManageSettings: false,
           permToggleMaintenance: false,
+          permViewUsers: false,
+          permBanUsers: false,
+          permEditUsers: false,
+          permResetUserPasswords: false,
+          permManageUserEntitlements: false,
+          permViewLinks: false,
+          permDeleteLinks: false,
+          permManageSiteSettings: false,
+          permManageAuthSettings: false,
+          permRunMaintenance: false,
         }
       : {
           role: "USER",
@@ -133,6 +153,16 @@ export async function toggleAdminRole(targetUserId: string) {
           permManageLinks: false,
           permManageSettings: false,
           permToggleMaintenance: false,
+          permViewUsers: false,
+          permBanUsers: false,
+          permEditUsers: false,
+          permResetUserPasswords: false,
+          permManageUserEntitlements: false,
+          permViewLinks: false,
+          permDeleteLinks: false,
+          permManageSiteSettings: false,
+          permManageAuthSettings: false,
+          permRunMaintenance: false,
         },
   });
 
@@ -157,7 +187,17 @@ export async function updateAdminPermissions(
     select: {
       id: true,
       role: true,
+      permViewUsers: true,
+      permBanUsers: true,
+      permEditUsers: true,
+      permResetUserPasswords: true,
+      permManageUserEntitlements: true,
       permDeleteUsers: true,
+      permViewLinks: true,
+      permDeleteLinks: true,
+      permManageSiteSettings: true,
+      permManageAuthSettings: true,
+      permRunMaintenance: true,
       permToggleMaintenance: true,
     },
   });
@@ -174,6 +214,18 @@ export async function updateAdminPermissions(
     target.permDeleteUsers !== permissions.permDeleteUsers ||
     target.permToggleMaintenance !== permissions.permToggleMaintenance;
 
+  const legacyManageUsers =
+    permissions.permViewUsers ||
+    permissions.permBanUsers ||
+    permissions.permEditUsers ||
+    permissions.permResetUserPasswords ||
+    permissions.permManageUserEntitlements ||
+    permissions.permRunMaintenance;
+  const legacyManageLinks =
+    permissions.permViewLinks || permissions.permDeleteLinks;
+  const legacyManageSettings =
+    permissions.permManageSiteSettings || permissions.permManageAuthSettings;
+
   if (highRiskChanged && !highRiskConfirmed) {
     throw new Error("High risk permission change requires confirmation");
   }
@@ -181,11 +233,21 @@ export async function updateAdminPermissions(
   await prisma.user.update({
     where: { id: targetUserId },
     data: {
-      permManageUsers: permissions.permManageUsers,
+      permViewUsers: permissions.permViewUsers,
+      permBanUsers: permissions.permBanUsers,
+      permEditUsers: permissions.permEditUsers,
+      permResetUserPasswords: permissions.permResetUserPasswords,
+      permManageUserEntitlements: permissions.permManageUserEntitlements,
       permDeleteUsers: permissions.permDeleteUsers,
-      permManageLinks: permissions.permManageLinks,
-      permManageSettings: permissions.permManageSettings,
+      permViewLinks: permissions.permViewLinks,
+      permDeleteLinks: permissions.permDeleteLinks,
+      permManageSiteSettings: permissions.permManageSiteSettings,
+      permManageAuthSettings: permissions.permManageAuthSettings,
+      permRunMaintenance: permissions.permRunMaintenance,
       permToggleMaintenance: permissions.permToggleMaintenance,
+      permManageUsers: legacyManageUsers,
+      permManageLinks: legacyManageLinks,
+      permManageSettings: legacyManageSettings,
     },
   });
 

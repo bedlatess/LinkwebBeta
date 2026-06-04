@@ -32,6 +32,16 @@ export const ADMIN_PERMISSION_FIELDS = [
   "permManageLinks",
   "permManageSettings",
   "permToggleMaintenance",
+  "permViewUsers",
+  "permBanUsers",
+  "permEditUsers",
+  "permResetUserPasswords",
+  "permManageUserEntitlements",
+  "permViewLinks",
+  "permDeleteLinks",
+  "permManageSiteSettings",
+  "permManageAuthSettings",
+  "permRunMaintenance",
 ] as const;
 
 export type AdminPermissionField = (typeof ADMIN_PERMISSION_FIELDS)[number];
@@ -44,6 +54,16 @@ const EMPTY_ADMIN_PERMISSIONS: AdminPermissionClaims = {
   permManageLinks: false,
   permManageSettings: false,
   permToggleMaintenance: false,
+  permViewUsers: false,
+  permBanUsers: false,
+  permEditUsers: false,
+  permResetUserPasswords: false,
+  permManageUserEntitlements: false,
+  permViewLinks: false,
+  permDeleteLinks: false,
+  permManageSiteSettings: false,
+  permManageAuthSettings: false,
+  permRunMaintenance: false,
 };
 
 declare module "next-auth" {
@@ -61,6 +81,16 @@ declare module "next-auth" {
     permManageLinks?: boolean;
     permManageSettings?: boolean;
     permToggleMaintenance?: boolean;
+    permViewUsers?: boolean;
+    permBanUsers?: boolean;
+    permEditUsers?: boolean;
+    permResetUserPasswords?: boolean;
+    permManageUserEntitlements?: boolean;
+    permViewLinks?: boolean;
+    permDeleteLinks?: boolean;
+    permManageSiteSettings?: boolean;
+    permManageAuthSettings?: boolean;
+    permRunMaintenance?: boolean;
   }
 }
 
@@ -73,6 +103,16 @@ declare module "next-auth/jwt" {
     permManageLinks?: boolean;
     permManageSettings?: boolean;
     permToggleMaintenance?: boolean;
+    permViewUsers?: boolean;
+    permBanUsers?: boolean;
+    permEditUsers?: boolean;
+    permResetUserPasswords?: boolean;
+    permManageUserEntitlements?: boolean;
+    permViewLinks?: boolean;
+    permDeleteLinks?: boolean;
+    permManageSiteSettings?: boolean;
+    permManageAuthSettings?: boolean;
+    permRunMaintenance?: boolean;
   }
 }
 
@@ -81,6 +121,10 @@ class AccountBannedError extends CredentialsSignin {
 }
 
 function normalizeAdminClaims(user: Partial<AdminPermissionClaims> & { role?: string } | null) {
+  const legacyManageUsers = user?.permManageUsers ?? false;
+  const legacyManageLinks = user?.permManageLinks ?? false;
+  const legacyManageSettings = user?.permManageSettings ?? false;
+
   return {
     role: (user?.role === "ADMIN" ? "ADMIN" : "USER") as UserRole,
     permManageUsers: user?.permManageUsers ?? false,
@@ -88,6 +132,20 @@ function normalizeAdminClaims(user: Partial<AdminPermissionClaims> & { role?: st
     permManageLinks: user?.permManageLinks ?? false,
     permManageSettings: user?.permManageSettings ?? false,
     permToggleMaintenance: user?.permToggleMaintenance ?? false,
+    permViewUsers: user?.permViewUsers ?? legacyManageUsers,
+    permBanUsers: user?.permBanUsers ?? legacyManageUsers,
+    permEditUsers: user?.permEditUsers ?? legacyManageUsers,
+    permResetUserPasswords:
+      user?.permResetUserPasswords ?? legacyManageUsers,
+    permManageUserEntitlements:
+      user?.permManageUserEntitlements ?? legacyManageUsers,
+    permViewLinks: user?.permViewLinks ?? legacyManageLinks,
+    permDeleteLinks: user?.permDeleteLinks ?? legacyManageLinks,
+    permManageSiteSettings:
+      user?.permManageSiteSettings ?? legacyManageSettings,
+    permManageAuthSettings:
+      user?.permManageAuthSettings ?? legacyManageSettings,
+    permRunMaintenance: user?.permRunMaintenance ?? legacyManageUsers,
   };
 }
 
@@ -105,6 +163,16 @@ async function loadUserAdminClaims(
           permManageLinks: true,
           permManageSettings: true,
           permToggleMaintenance: true,
+          permViewUsers: true,
+          permBanUsers: true,
+          permEditUsers: true,
+          permResetUserPasswords: true,
+          permManageUserEntitlements: true,
+          permViewLinks: true,
+          permDeleteLinks: true,
+          permManageSiteSettings: true,
+          permManageAuthSettings: true,
+          permRunMaintenance: true,
         },
       })
     : email
@@ -117,6 +185,16 @@ async function loadUserAdminClaims(
           permManageLinks: true,
           permManageSettings: true,
           permToggleMaintenance: true,
+          permViewUsers: true,
+          permBanUsers: true,
+          permEditUsers: true,
+          permResetUserPasswords: true,
+          permManageUserEntitlements: true,
+          permViewLinks: true,
+          permDeleteLinks: true,
+          permManageSiteSettings: true,
+          permManageAuthSettings: true,
+          permRunMaintenance: true,
         },
       })
     : null;
@@ -186,6 +264,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             permManageLinks: true,
             permManageSettings: true,
             permToggleMaintenance: true,
+            permViewUsers: true,
+            permBanUsers: true,
+            permEditUsers: true,
+            permResetUserPasswords: true,
+            permManageUserEntitlements: true,
+            permViewLinks: true,
+            permDeleteLinks: true,
+            permManageSiteSettings: true,
+            permManageAuthSettings: true,
+            permRunMaintenance: true,
           },
         });
 
@@ -220,6 +308,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           permManageLinks: user.permManageLinks,
           permManageSettings: user.permManageSettings,
           permToggleMaintenance: user.permToggleMaintenance,
+          permViewUsers: user.permViewUsers,
+          permBanUsers: user.permBanUsers,
+          permEditUsers: user.permEditUsers,
+          permResetUserPasswords: user.permResetUserPasswords,
+          permManageUserEntitlements: user.permManageUserEntitlements,
+          permViewLinks: user.permViewLinks,
+          permDeleteLinks: user.permDeleteLinks,
+          permManageSiteSettings: user.permManageSiteSettings,
+          permManageAuthSettings: user.permManageAuthSettings,
+          permRunMaintenance: user.permRunMaintenance,
         };
       },
     }),
@@ -338,6 +436,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.permManageSettings = token.permManageSettings === true;
         session.user.permToggleMaintenance =
           token.permToggleMaintenance === true;
+        session.user.permViewUsers = token.permViewUsers === true;
+        session.user.permBanUsers = token.permBanUsers === true;
+        session.user.permEditUsers = token.permEditUsers === true;
+        session.user.permResetUserPasswords =
+          token.permResetUserPasswords === true;
+        session.user.permManageUserEntitlements =
+          token.permManageUserEntitlements === true;
+        session.user.permViewLinks = token.permViewLinks === true;
+        session.user.permDeleteLinks = token.permDeleteLinks === true;
+        session.user.permManageSiteSettings =
+          token.permManageSiteSettings === true;
+        session.user.permManageAuthSettings =
+          token.permManageAuthSettings === true;
+        session.user.permRunMaintenance = token.permRunMaintenance === true;
       }
       return session;
     },

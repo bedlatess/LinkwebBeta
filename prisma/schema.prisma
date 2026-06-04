@@ -39,6 +39,16 @@ model User {
   permManageLinks       Boolean @default(false)  // content review permission
   permManageSettings    Boolean @default(false)  // global site settings permission
   permToggleMaintenance Boolean @default(false)  // high risk: maintenance mode toggle
+  permViewUsers              Boolean @default(false) // view user directory
+  permBanUsers               Boolean @default(false) // ban / unban users
+  permEditUsers              Boolean @default(false) // edit user profile and assets
+  permResetUserPasswords     Boolean @default(false) // reset regular user passwords
+  permManageUserEntitlements Boolean @default(false) // toggle CSS/font/tip entitlements
+  permViewLinks              Boolean @default(false) // view global link review pool
+  permDeleteLinks            Boolean @default(false) // delete / take down links
+  permManageSiteSettings     Boolean @default(false) // edit public site display settings
+  permManageAuthSettings     Boolean @default(false) // edit registration and OAuth flags
+  permRunMaintenance         Boolean @default(false) // run cleanup operations
 
   // Relations
   accounts      Account[]
