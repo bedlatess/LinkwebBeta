@@ -11,6 +11,7 @@
 
 import { NextResponse } from "next/server";
 import { isDatabaseRegistrationEnabled } from "@/lib/site-settings";
+import { validateRegistrationPassword } from "@/lib/password-policy";
 import { prisma } from "@/lib/prisma";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import bcrypt from "bcryptjs";
@@ -83,8 +84,9 @@ export async function POST(request: Request) {
       errors.push("该用户名已被系统保留，无法注册");
     }
 
-    if (!password || password.length < 6) {
-      errors.push("密码长度至少为 6 个字符");
+    const passwordError = validateRegistrationPassword(password);
+    if (passwordError) {
+      errors.push(passwordError);
     }
 
     if (errors.length > 0) {

@@ -1,19 +1,10 @@
 "use client";
 
-/**
- * Register Form — Client Component
- *
- * Fields: Email, Username, Password
- * Validates: username format (alphanumeric + underscore, 3-30 chars)
- * Submits to POST /api/auth/register
- * On success: calls onSuccess(email, password) for auto sign-in
- */
-
+import { validateRegistrationPassword } from "@/lib/password-policy";
+import { ArrowLeft, Check, Link2, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Loader2, Link2, ArrowLeft, Check } from "lucide-react";
 import { TurnstileWidget } from "./turnstile-widget";
 
-// Username regex: letters, numbers, underscores, 3-30 chars
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 interface Props {
@@ -46,11 +37,12 @@ export function RegisterForm({
     setError(message);
   }, []);
 
-  // Client-side username validation
-  const usernameError = username.length > 0 && !USERNAME_REGEX.test(username)
-    ? "只允许英文字母、数字和下划线，3-30 个字符"
-    : "";
-
+  const usernameError =
+    username.length > 0 && !USERNAME_REGEX.test(username)
+      ? "只允许英文字母、数字和下划线，3-30 个字符"
+      : "";
+  const passwordPolicyError =
+    password.length > 0 ? validateRegistrationPassword(password) : "";
   const passwordError =
     confirmPassword.length > 0 && password !== confirmPassword
       ? "两次输入的密码不一致"
@@ -60,16 +52,16 @@ export function RegisterForm({
     e.preventDefault();
     setError("");
 
-    if (usernameError || passwordError) return;
+    if (usernameError || passwordError || passwordPolicyError) return;
 
-    // Client-side validation
     if (!email.includes("@")) {
       setError("请提供有效的邮箱地址");
       return;
     }
 
-    if (password.length < 6) {
-      setError("密码长度至少为 6 个字符");
+    const nextPasswordError = validateRegistrationPassword(password);
+    if (nextPasswordError) {
+      setError(nextPasswordError);
       return;
     }
 
@@ -100,7 +92,6 @@ export function RegisterForm({
         return;
       }
 
-      // Registration successful — trigger auto sign-in
       onSuccess(email.trim(), password);
     } catch {
       setError("网络错误，请检查连接后重试");
@@ -111,23 +102,27 @@ export function RegisterForm({
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 shadow-2xl shadow-black/30 backdrop-blur-2xl">
-      {/* Logo & Title */}
-      <div className="mb-8 text-center">
-        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
-          <Link2 className="h-7 w-7 text-white" />
+    <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] shadow-2xl shadow-black/35 backdrop-blur-2xl">
+      <div className="border-b border-white/10 bg-white/[0.03] px-7 py-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-13 w-13 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-300/10">
+            <Link2 className="h-6 w-6 text-emerald-100" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/35">
+              create identity
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-white">
+              创建账号
+            </h1>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
-          创建账号
-        </h1>
-        <p className="mt-1.5 text-sm text-white/50">
-          注册后即可拥有专属链接聚合页
+        <p className="mt-4 text-sm leading-6 text-white/45">
+          注册后即可拥有专属链接聚合页和个人控制台。
         </p>
       </div>
 
-      {/* ─── Register Form ─── */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email */}
+      <form onSubmit={handleSubmit} className="space-y-4 p-7">
         <div>
           <label className="mb-1.5 block text-xs font-medium text-white/50">
             邮箱地址
@@ -139,16 +134,15 @@ export function RegisterForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your@email.com"
-            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-white/20 backdrop-blur-sm transition-all duration-200 focus:border-indigo-500/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="w-full rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-emerald-300/45 focus:ring-2 focus:ring-emerald-300/10"
           />
         </div>
 
-        {/* Username */}
         <div>
           <label className="mb-1.5 block text-xs font-medium text-white/50">
             用户名{" "}
-            <span className="text-white/20">
-              (公开页面地址: /{username || "yourname"})
+            <span className="text-white/25">
+              公开地址：/{username || "yourname"}
             </span>
           </label>
           <input
@@ -158,21 +152,23 @@ export function RegisterForm({
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="yourname"
-            className={`w-full rounded-xl border bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-white/20 backdrop-blur-sm transition-all duration-200 focus:bg-white/[0.06] focus:outline-none focus:ring-2 ${
+            className={`w-full rounded-2xl border bg-slate-950/35 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/22 focus:ring-2 ${
               usernameError
-                ? "border-red-500/30 focus:border-red-500/50 focus:ring-red-500/15"
-                : "border-white/10 focus:border-indigo-500/50 focus:ring-indigo-500/20"
+                ? "border-red-500/30 focus:border-red-400/50 focus:ring-red-400/10"
+                : "border-white/10 focus:border-emerald-300/45 focus:ring-emerald-300/10"
             }`}
           />
           {usernameError && (
-            <p className="mt-1 text-xs text-red-400">{usernameError}</p>
+            <p className="mt-1.5 text-xs text-red-300">{usernameError}</p>
           )}
         </div>
 
-        {/* Password */}
         <div>
           <label className="mb-1.5 block text-xs font-medium text-white/50">
-            密码 <span className="text-white/20">(至少 6 个字符)</span>
+            密码{" "}
+            <span className="text-white/25">
+              至少 6 位，四类字符中任选两类
+            </span>
           </label>
           <input
             type="password"
@@ -180,12 +176,20 @@ export function RegisterForm({
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-white/20 backdrop-blur-sm transition-all duration-200 focus:border-indigo-500/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            placeholder="test123"
+            className={`w-full rounded-2xl border bg-slate-950/35 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/22 focus:ring-2 ${
+              passwordPolicyError
+                ? "border-red-500/30 focus:border-red-400/50 focus:ring-red-400/10"
+                : "border-white/10 focus:border-emerald-300/45 focus:ring-emerald-300/10"
+            }`}
           />
+          {passwordPolicyError && (
+            <p className="mt-1.5 text-xs text-red-300">
+              {passwordPolicyError}
+            </p>
+          )}
         </div>
 
-        {/* Confirm Password */}
         <div>
           <label className="mb-1.5 block text-xs font-medium text-white/50">
             确认密码
@@ -196,21 +200,20 @@ export function RegisterForm({
             required
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
-            className={`w-full rounded-xl border bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-white/20 backdrop-blur-sm transition-all duration-200 focus:bg-white/[0.06] focus:outline-none focus:ring-2 ${
+            placeholder="再次输入密码"
+            className={`w-full rounded-2xl border bg-slate-950/35 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/22 focus:ring-2 ${
               passwordError
-                ? "border-red-500/30 focus:border-red-500/50 focus:ring-red-500/15"
-                : "border-white/10 focus:border-indigo-500/50 focus:ring-indigo-500/20"
+                ? "border-red-500/30 focus:border-red-400/50 focus:ring-red-400/10"
+                : "border-white/10 focus:border-emerald-300/45 focus:ring-emerald-300/10"
             }`}
           />
           {passwordError && (
-            <p className="mt-1 text-xs text-red-400">{passwordError}</p>
+            <p className="mt-1.5 text-xs text-red-300">{passwordError}</p>
           )}
         </div>
 
-        {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+          <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {error}
           </div>
         )}
@@ -225,16 +228,16 @@ export function RegisterForm({
           />
         )}
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={
             loading ||
             !!usernameError ||
             !!passwordError ||
+            !!passwordPolicyError ||
             (requiresTurnstile && !turnstileToken)
           }
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:from-indigo-400 hover:to-purple-500 hover:shadow-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-300 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <>
@@ -250,12 +253,11 @@ export function RegisterForm({
         </button>
       </form>
 
-      {/* ─── Back to sign-in ─── */}
-      <div className="mt-6 text-center">
+      <div className="border-t border-white/10 px-7 py-5 text-center">
         <button
           type="button"
           onClick={onSwitchToSignIn}
-          className="inline-flex items-center gap-1.5 text-xs text-white/30 transition-colors hover:text-indigo-400"
+          className="inline-flex items-center gap-1.5 text-xs text-white/35 transition hover:text-cyan-200"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           已有账号？返回登录

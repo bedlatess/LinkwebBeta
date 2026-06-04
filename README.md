@@ -1,9 +1,9 @@
 # Linkweb
 
-> 极客范、数据自主的个人链接聚合中心。  
-> Self-hosted Link-in-bio control plane for creators, hackers, builders, and small teams.
+> 基于 [LittleLink](https://littlelink.io) 二次开发的开源自托管 Link-in-bio 平台。  
+> A self-hosted link-in-bio control plane for creators, hackers, builders, and small teams.
 
-Linkweb 是一个开源自托管的 Link-in-bio 平台。它把公开个人主页、链接管理、主题外观、点击分析、打赏变现、自定义域名和系统管理后台整合进一套可部署、可迁移、可掌控的系统里。
+Linkweb 把公开个人主页、链接管理、主题外观、点击分析、打赏变现、自定义域名、系统后台和安全治理整合进一套可部署、可迁移、可掌控的系统里。
 
 它的目标很直接：你的链接、你的主题、你的域名、你的数据库。
 
@@ -17,7 +17,7 @@ Linkweb 适合这些场景：
 - 自托管实验室：用 SQLite + Docker 快速点火，也能继续扩展为更大的服务。
 - 小团队链接基础设施：用系统后台管理用户、内容、权限、站点开关和安全规则。
 
-公开个人主页使用 `/:username` 路由；系统管理后台固定在 `/sys-admin`。`admin` 不再是系统后台路径，可以作为普通用户的公开主页用户名使用。
+公开个人主页使用 `/:username` 路由；系统管理后台固定在 `/sys-admin`。`admin` 可以作为普通用户公开主页用户名使用，不再和后台路径冲突。
 
 ## ✨ 核心特性
 
@@ -34,22 +34,25 @@ Linkweb 适合这些场景：
   支持 PayPal 邮箱、自定义赞助链接（BuyMeACoffee / Ko-fi / 爱发电等）和加密货币收款地址。
 
 - **站点级品牌配置**
-  后台可配置 Site Title、SEO Description、公告、页脚、GitHub 地址、支持邮箱和站点图标。站点图标支持外链或后台上传。
+  后台可配置 Site Title、SEO Description、公告、页脚、GitHub 地址、支持邮箱、联系管理员入口和站点图标。联系入口支持 `mailto:`、Telegram、WhatsApp、Discord、QQ、微信客服页和任意 HTTPS 链接。
+
+- **密码与注册安全**
+  注册密码最低 6 个字符，并且大写字母、小写字母、数字、符号四类中至少命中两类。注册入口可由后台一键关闭。
 
 - **点击日志与防刷限流**  
   `/api/visit` 使用 `NEXTAUTH_SECRET` 加盐哈希 IP，不存储原始 IP；接口带 1 分钟 60 次的限流保护，异常高频 IP 会自动写入封禁规则。
 
-- **账号封禁与封禁页**
-  被封禁用户无法登录，公开主页会跳转到专属 `/banned` 页面；IP 被封禁时也会显示同一套安全提示页。
+- **账号/IP 封禁与封禁页**
+  被封禁用户无法登录，公开主页会跳转到专属 `/banned` 页面；IP 被封禁时也会显示同一套安全提示页，并可通过后台配置的联系入口申诉。
 
 - **系统管理后台**
   `/sys-admin` 支持独立超级管理员账号和被提权的普通管理员账号，内置用户管理、内容审查、全局设置、数据清理、IP 黑名单等模块。
 
 - **精细化权限控制**
-  普通管理员可被授予查看用户、封禁用户、编辑用户、重置密码、内容审查、站点配置、维护模式、数据清理等细分权限；高危权限带二次确认。
+  普通管理员可被授予查看用户、封禁用户、编辑用户、重置密码、内容审查、站点配置、维护模式、数据清理等细分权限；高危权限带二次确认，写操作实时查询数据库权限位。
 
 - **IP/CIDR 封禁**
-  支持手动封禁单 IP 或 CIDR 网段，也支持点击接口自动检测恶意流量后封禁。为避免误封，`/sys-admin` 后台、独立超级管理员会话和普通管理员会话会自动进入白名单；新增手动规则时也会阻止保存命中当前操作者 IP 的规则。
+  支持手动封禁单 IP 或 CIDR 网段，也支持点击接口自动检测恶意流量后封禁。为避免误封，`/sys-admin` 后台、独立超级管理员会话和普通管理员会话会自动进入白名单。
 
 - **自定义域名绑定**  
   用户可绑定自己的域名，服务端根据 Host 自动 rewrite 到对应公开主页。
@@ -103,7 +106,7 @@ NEXTAUTH_SECRET="replace-with-a-secure-random-secret"
 openssl rand -base64 32
 ```
 
-GitHub / Google OAuth 可选；未配置时登录页会自动隐藏对应按钮。
+GitHub / Google OAuth 可选；未配置时登录页会自动隐藏对应按钮。Cloudflare Turnstile 可选，配置后会保护登录与注册接口。
 
 ### 3. 对齐数据库迁移
 
@@ -118,15 +121,23 @@ npx prisma generate
 npx prisma migrate dev
 ```
 
-### 4. 初始化账号
+### 4. 初始化演示用户与超级管理员
 
-普通测试账号可通过注册页创建；独立超级管理员必须通过服务器 CLI 创建：
+生产启动脚本会执行 `scripts/seed-admin.mjs`，默认准备：
+
+```text
+普通演示账号：test@pawn.eu.org / test123
+演示主页：http://localhost:2222/test
+默认公开账号：admin@linkweb.local / admin123
+```
+
+独立超级管理员必须通过服务器 CLI 创建：
 
 ```bash
 npm run admin:create -- --email=admin@pawn.eu.org --name="PAWN"
 ```
 
-脚本会提示输入密码，并将密码用 bcrypt 哈希后写入 `AdminUser` 表。
+脚本会提示输入密码，并将密码用 bcrypt 哈希后写入 `AdminUser` 表。超级管理员密码也可以在后台右上角入口修改，CLI 方式仍保留用于应急恢复。
 
 ### 5. 启动开发服务器
 
@@ -158,7 +169,7 @@ http://localhost:2222/sys-admin
 - 仪表盘：总用户、总链接、活跃管理员等数据。
 - 用户管理：新增用户、封禁/解封、删除、编辑资料、重置密码、权限配置。
 - 内容审查：查看全站链接池，删除违规链接。
-- 全局设置：站点标题、SEO、公告、页脚、OAuth、注册开关、维护模式、站点图标。
+- 全局设置：站点标题、SEO、公告、页脚、OAuth、注册开关、维护模式、站点图标、联系管理员入口。
 - 数据清理：清理过期会话、空链接，管理 IP/CIDR 封禁规则。
 
 ## 🐳 生产部署
@@ -190,7 +201,7 @@ http://your-server-ip:2222
 PORT=8080 docker compose up -d --build
 ```
 
-💡 **NPM 反代小贴士**：若使用 Nginx Proxy Manager 管理外部 80/443 域名网关，只需在 NPM 后台新建 Proxy Host，将 `Domain Names` 填入你的漂亮域名，`Forward Name/IP` 填入 `127.0.0.1`，`Forward Port` 稳稳地填入 `2222` 即可。用户访问域名时将完全隐去端口尾巴。
+💡 **NPM 反代小贴士**：若使用 Nginx Proxy Manager 管理外部 80/443 域名网关，只需在 NPM 后台新建 Proxy Host，将 `Domain Names` 填入你的漂亮域名，`Forward Name/IP` 填入 `127.0.0.1`，`Forward Port` 填入 `2222` 即可。用户访问域名时将完全隐去端口尾巴。
 
 ## 📁 项目结构
 
@@ -209,6 +220,7 @@ src/
 │   ├── admin-action-auth.ts     # 后台统一鉴权
 │   ├── admin-session.ts         # 超管 HttpOnly Cookie Session
 │   ├── ip-ban.ts                # IP/CIDR 封禁匹配
+│   ├── password-policy.ts       # 注册密码策略
 │   └── prisma.ts                # Prisma Client 单例
 └── stores/
     └── dashboard-store.ts       # Zustand 状态
@@ -232,6 +244,10 @@ prisma/
 ## 🧭 开源仓库
 
 GitHub: [bedlatess/LinkwebBeta](https://github.com/bedlatess/LinkwebBeta)
+
+## 🙏 致谢
+
+Linkweb 是基于 [LittleLink](https://littlelink.io) 理念与开源生态进行的二次开发版本，在原本轻量链接聚合思路之上扩展了自托管后台、权限系统、安全治理、打赏、点击分析和生产部署能力。
 
 ---
 

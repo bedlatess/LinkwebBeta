@@ -5,6 +5,7 @@ import {
   requireSuperAdminActionSession,
   type AdminPermissionField,
 } from "@/lib/admin-action-auth";
+import { validateRegistrationPassword } from "@/lib/password-policy";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -103,8 +104,9 @@ export async function createManagedUser(formData: FormData) {
     throw new Error("该用户名已被系统保留，无法创建。");
   }
 
-  if (password.length < 8) {
-    throw new Error("初始密码至少需要 8 个字符。");
+  const passwordError = validateRegistrationPassword(password);
+  if (passwordError) {
+    throw new Error(passwordError);
   }
 
   const passwordHash = await bcrypt.hash(password, 12);

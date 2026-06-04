@@ -15,6 +15,10 @@ export async function updateSiteBasics(formData: FormData) {
   const siteTitle = String(formData.get("siteTitle") ?? "").trim();
   const seoDescription = String(formData.get("seoDescription") ?? "").trim();
   const supportEmail = String(formData.get("supportEmail") ?? "").trim();
+  const adminContactLabel = String(
+    formData.get("adminContactLabel") ?? ""
+  ).trim();
+  const adminContactUrl = String(formData.get("adminContactUrl") ?? "").trim();
   const siteIconUrl = String(formData.get("siteIconUrl") ?? "").trim();
   const announcementText = String(
     formData.get("announcementText") ?? ""
@@ -35,6 +39,8 @@ export async function updateSiteBasics(formData: FormData) {
       seoDescription:
         seoDescription || "Self-hosted link-in-bio platform",
       supportEmail: supportEmail || null,
+      adminContactLabel: adminContactLabel || null,
+      adminContactUrl: adminContactUrl || null,
       siteIconUrl: siteIconUrl || null,
       announcementEnabled,
       announcementText: announcementText || null,
@@ -46,6 +52,8 @@ export async function updateSiteBasics(formData: FormData) {
       seoDescription:
         seoDescription || "Self-hosted link-in-bio platform",
       supportEmail: supportEmail || null,
+      adminContactLabel: adminContactLabel || null,
+      adminContactUrl: adminContactUrl || null,
       siteIconUrl: siteIconUrl || null,
       announcementEnabled,
       announcementText: announcementText || null,
@@ -57,6 +65,7 @@ export async function updateSiteBasics(formData: FormData) {
   revalidatePath("/sys-admin/settings");
   revalidatePath("/");
   revalidatePath("/auth/signin");
+  revalidatePath("/banned");
   redirect(withToast("站点基础设置保存成功"));
 }
 

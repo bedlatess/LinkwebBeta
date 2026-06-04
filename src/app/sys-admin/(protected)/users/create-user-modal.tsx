@@ -116,12 +116,15 @@ export function CreateUserModal() {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-white/50">
               初始密码
+              <span className="ml-2 text-white/25">
+                至少 6 位，四类字符中任选两类
+              </span>
             </label>
             <input
               name="password"
               type="password"
               required
-              minLength={8}
+              minLength={6}
               className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/10"
             />
           </div>

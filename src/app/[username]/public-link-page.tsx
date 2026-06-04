@@ -145,6 +145,9 @@ export function PublicLinkPage({
   if (theme.fontFamily) {
     bgStyle.fontFamily = theme.fontFamily;
   }
+  if (!theme.bgValue || theme.bgValue === "#0a0a0a") {
+    bgStyle.background = "#020617";
+  }
 
   const hasBlur = theme.bgBlur > 0;
   const buttonRadiusClass =
@@ -170,10 +173,13 @@ export function PublicLinkPage({
 
   return (
     <div
-      className="linkweb-public flex min-h-screen flex-col items-center"
+      className="linkweb-public relative flex min-h-screen flex-col items-center overflow-hidden"
       style={bgStyle}
     >
-      <main className="flex w-full max-w-lg flex-1 flex-col items-center px-4 py-16">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:44px_44px] opacity-70" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 border-b border-white/10 bg-white/[0.025]" />
+
+      <main className="relative z-10 flex w-full max-w-lg flex-1 flex-col items-center px-4 py-16">
         {/* Avatar */}
         <div className="mb-4">
           {avatarUrl ? (
@@ -186,7 +192,7 @@ export function PublicLinkPage({
             />
           ) : (
             <div
-              className={`flex h-20 w-20 items-center justify-center rounded-full ${cardBg} ring-2 ${avatarRing}`}
+            className={`flex h-20 w-20 items-center justify-center rounded-3xl ${cardBg} ring-2 ${avatarRing}`}
             >
               <Globe
                 className={`h-8 w-8 ${
@@ -228,7 +234,7 @@ export function PublicLinkPage({
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackClick(link.id)}
-              className={`flex items-center gap-3 border px-5 py-3.5 transition-all duration-200 ${cardBg} ${cardHover} ${buttonRadiusClass} ${
+              className={`flex items-center gap-3 border px-5 py-3.5 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 ${cardBg} ${cardHover} ${buttonRadiusClass} ${
                 hasBlur ? "backdrop-blur-md" : ""
               }`}
               style={
@@ -261,7 +267,7 @@ export function PublicLinkPage({
         )}
       </main>
 
-      <footer className="w-full py-6 text-center">
+      <footer className="relative z-10 w-full py-6 text-center">
         <p
           className={`text-xs ${
             isDarkBg ? "text-white/15" : "text-slate-350"

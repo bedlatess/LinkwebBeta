@@ -250,6 +250,59 @@ export default async function AdminSettingsPage() {
               </div>
             </div>
 
+            <div className="rounded-2xl border border-cyan-300/15 bg-cyan-400/[0.035] p-4">
+              <div className="mb-4 flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-400/12 text-cyan-200">
+                  <Mail className="h-4 w-4" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold text-white/82">
+                    联系管理员入口
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-white/42">
+                    用于封禁页和登录页的求助入口。支持 mailto、Telegram、WhatsApp、Discord、QQ 客服链接、微信客服页或任意 HTTPS 地址。
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-[0.7fr_1.3fr]">
+                <div>
+                  <label
+                    htmlFor="adminContactLabel"
+                    className="mb-1.5 block text-xs font-medium text-white/50"
+                  >
+                    按钮文案
+                  </label>
+                  <input
+                    id="adminContactLabel"
+                    name="adminContactLabel"
+                    defaultValue={settings.adminContactLabel ?? ""}
+                    placeholder="联系管理员"
+                    disabled={!canManageSiteSettings}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950/35 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/10"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="adminContactUrl"
+                    className="mb-1.5 block text-xs font-medium text-white/50"
+                  >
+                    联系链接
+                  </label>
+                  <input
+                    id="adminContactUrl"
+                    name="adminContactUrl"
+                    defaultValue={settings.adminContactUrl ?? ""}
+                    placeholder="mailto:support@example.com / https://t.me/yourname / https://wa.me/..."
+                    disabled={!canManageSiteSettings}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950/35 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/10"
+                  />
+                </div>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-white/32">
+                示例：mailto:support@example.com、https://t.me/linkweb、https://wa.me/8613800000000、https://qm.qq.com/cgi-bin/qm/qr?k=...、https://discord.gg/...
+              </p>
+            </div>
+
             <SiteIconUploader
               initialUrl={settings.siteIconUrl ?? ""}
               disabled={!canManageSiteSettings}
@@ -366,7 +419,11 @@ export default async function AdminSettingsPage() {
           />
           <FieldImpact
             label="Support Email"
-            effect="显示在登录页底部，给用户一个明确的管理员联系入口。"
+            effect="作为联系管理员链接的邮箱回退方案，也可显示在登录页底部。"
+          />
+          <FieldImpact
+            label="联系管理员入口"
+            effect="影响封禁页的联系按钮和登录页帮助入口，可配置为邮箱、Telegram、WhatsApp、QQ、微信客服页或其他 HTTPS 链接。"
           />
           <FieldImpact
             label="首页公告条"

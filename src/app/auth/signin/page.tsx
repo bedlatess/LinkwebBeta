@@ -38,6 +38,8 @@ export default async function SignInPage() {
         siteTitle={settings.siteTitle}
         seoDescription={settings.seoDescription}
         supportEmail={settings.supportEmail}
+        adminContactLabel={settings.adminContactLabel}
+        adminContactUrl={settings.adminContactUrl}
         siteIconUrl={settings.siteIconUrl}
       />
     </Suspense>

@@ -80,6 +80,8 @@ model SiteSettings {
   siteTitle           String   @default("LinkWeb")
   seoDescription      String   @default("Self-hosted link-in-bio platform")
   supportEmail        String?
+  adminContactLabel   String?
+  adminContactUrl     String?
   siteIconUrl         String?
   announcementEnabled Boolean  @default(false)
   announcementText    String?

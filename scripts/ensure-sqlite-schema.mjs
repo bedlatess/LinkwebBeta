@@ -162,6 +162,8 @@ async function main() {
       "siteTitle" TEXT NOT NULL DEFAULT 'LinkWeb',
       "seoDescription" TEXT NOT NULL DEFAULT 'Self-hosted link-in-bio platform',
       "supportEmail" TEXT,
+      "adminContactLabel" TEXT,
+      "adminContactUrl" TEXT,
       "siteIconUrl" TEXT,
       "announcementEnabled" BOOLEAN NOT NULL DEFAULT false,
       "announcementText" TEXT,
@@ -179,6 +181,8 @@ async function main() {
     "BOOLEAN NOT NULL DEFAULT false"
   );
   await addColumn("SiteSettings", "supportEmail", "TEXT");
+  await addColumn("SiteSettings", "adminContactLabel", "TEXT");
+  await addColumn("SiteSettings", "adminContactUrl", "TEXT");
   await addColumn("SiteSettings", "siteIconUrl", "TEXT");
   await addColumn(
     "SiteSettings",
