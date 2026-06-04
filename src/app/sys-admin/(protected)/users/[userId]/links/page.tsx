@@ -10,7 +10,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DeleteLinkButton } from "../../../links/delete-link-button";
 import { deleteGlobalLink } from "../../../links/link-actions";
 
@@ -30,7 +30,9 @@ export default async function ManagedUserLinksPage({ params }: Props) {
   const actor = await getAdminActor();
 
   if (!actor?.permissions.permEditUsers) {
-    notFound();
+    redirect(
+      `/sys-admin?toast=${encodeURIComponent("当前管理员没有编辑用户权限")}`
+    );
   }
 
   const { userId } = await params;

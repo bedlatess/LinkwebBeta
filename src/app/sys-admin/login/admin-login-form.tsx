@@ -1,6 +1,7 @@
 "use client";
 
 import { TurnstileWidget } from "@/app/auth/signin/turnstile-widget";
+import { resolveAllowedAdminPath } from "@/lib/admin-route-permissions";
 import { Loader2, LogIn } from "lucide-react";
 import { getSession, signIn, signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -86,7 +87,29 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
         return;
       }
 
-      router.push(callbackUrl);
+      router.push(
+        resolveAllowedAdminPath(
+          {
+            permManageUsers: session.user.permManageUsers,
+            permDeleteUsers: session.user.permDeleteUsers,
+            permManageLinks: session.user.permManageLinks,
+            permManageSettings: session.user.permManageSettings,
+            permToggleMaintenance: session.user.permToggleMaintenance,
+            permViewUsers: session.user.permViewUsers,
+            permBanUsers: session.user.permBanUsers,
+            permEditUsers: session.user.permEditUsers,
+            permResetUserPasswords: session.user.permResetUserPasswords,
+            permManageUserEntitlements:
+              session.user.permManageUserEntitlements,
+            permViewLinks: session.user.permViewLinks,
+            permDeleteLinks: session.user.permDeleteLinks,
+            permManageSiteSettings: session.user.permManageSiteSettings,
+            permManageAuthSettings: session.user.permManageAuthSettings,
+            permRunMaintenance: session.user.permRunMaintenance,
+          },
+          callbackUrl
+        )
+      );
       router.refresh();
     } catch {
       setError("网络错误，请稍后重试。");

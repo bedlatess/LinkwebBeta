@@ -13,7 +13,7 @@ import {
   Type,
   UserPlus,
 } from "lucide-react";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import {
   toggleMaintenanceMode,
   toggleOauthEnabled,
@@ -125,7 +125,9 @@ export default async function AdminSettingsPage() {
   const canToggleMaintenance = actor?.permissions.permToggleMaintenance;
 
   if (!canManageSiteSettings && !canManageAuthSettings && !canToggleMaintenance) {
-    notFound();
+    redirect(
+      `/sys-admin?toast=${encodeURIComponent("当前管理员没有全局设置权限")}`
+    );
   }
 
   const settings = await getGlobalSiteSettings();

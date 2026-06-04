@@ -212,7 +212,7 @@ export async function toggleAdminRole(targetUserId: string) {
           permManageLinks: false,
           permManageSettings: false,
           permToggleMaintenance: false,
-          permViewUsers: false,
+          permViewUsers: true,
           permBanUsers: false,
           permEditUsers: false,
           permResetUserPasswords: false,

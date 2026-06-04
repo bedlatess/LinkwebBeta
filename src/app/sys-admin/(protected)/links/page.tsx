@@ -8,7 +8,7 @@ import {
   ShieldAlert,
   UserRound,
 } from "lucide-react";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { DeleteLinkButton } from "./delete-link-button";
 import { deleteGlobalLink } from "./link-actions";
 
@@ -28,7 +28,9 @@ export default async function AdminLinksReviewPage({ searchParams }: Props) {
   const actor = await getAdminActor();
 
   if (!actor?.permissions.permViewLinks) {
-    notFound();
+    redirect(
+      `/sys-admin?toast=${encodeURIComponent("当前管理员没有内容审查权限")}`
+    );
   }
 
   const { q } = await searchParams;

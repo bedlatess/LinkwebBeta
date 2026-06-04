@@ -11,7 +11,7 @@ import {
   UserCog,
 } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   resetManagedUserPassword,
   updateManagedUser,
@@ -25,7 +25,9 @@ export default async function ManagedUserEditPage({ params }: Props) {
   const actor = await getAdminActor();
 
   if (!actor?.permissions.permEditUsers) {
-    notFound();
+    redirect(
+      `/sys-admin?toast=${encodeURIComponent("当前管理员没有编辑用户权限")}`
+    );
   }
 
   const { userId } = await params;

@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   TimerReset,
 } from "lucide-react";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { CleanupActionButton } from "./cleanup-action-button";
 import { cleanupEmptyLinks, cleanupExpiredSessions } from "./maintenance-actions";
 import { IpBanDeleteButton } from "./ip-ban-buttons";
@@ -99,7 +99,9 @@ export default async function AdminMaintenancePage() {
   const actor = await getAdminActor();
 
   if (!actor?.permissions.permRunMaintenance) {
-    notFound();
+    redirect(
+      `/sys-admin?toast=${encodeURIComponent("当前管理员没有数据清理权限")}`
+    );
   }
 
   const now = new Date();

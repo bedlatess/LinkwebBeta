@@ -13,7 +13,7 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { AdminPermissionsModal } from "./admin-permissions-modal";
 import { CreateUserModal } from "./create-user-modal";
 import { DeleteUserButton } from "./delete-user-button";
@@ -91,7 +91,9 @@ export default async function AdminUsersPage() {
   const actor = await getAdminActor();
 
   if (!actor?.permissions.permViewUsers) {
-    notFound();
+    redirect(
+      `/sys-admin?toast=${encodeURIComponent("当前管理员没有用户管理权限")}`
+    );
   }
 
   const users = await prisma.user.findMany({
