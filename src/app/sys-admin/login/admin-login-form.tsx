@@ -7,7 +7,7 @@ import { useState } from "react";
 export function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/admin";
+  const callbackUrl = searchParams.get("callbackUrl") || "/sys-admin";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +20,7 @@ export function AdminLoginForm() {
     setLoading(true);
 
     try {
-      const response = await fetch("/admin/api/login", {
+      const response = await fetch("/sys-admin/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

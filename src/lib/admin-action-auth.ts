@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 export async function requireAdminActionSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
-  const request = new Request("http://linkweb.local/admin/action", {
+  const request = new Request("http://linkweb.local/sys-admin/action", {
     headers: token ? { cookie: `${ADMIN_SESSION_COOKIE}=${token}` } : {},
   });
   const session = await verifyAdminSessionFromRequest(request);

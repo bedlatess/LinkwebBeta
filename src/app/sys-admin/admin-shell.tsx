@@ -16,10 +16,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 const navItems = [
-  { href: "/admin", label: "仪表盘", icon: BarChart3 },
-  { href: "/admin/users", label: "用户管理", icon: Users },
-  { href: "/admin/settings", label: "全局设置", icon: Settings },
-  { href: "/admin/maintenance", label: "系统维护", icon: Wrench },
+  { href: "/sys-admin", label: "仪表盘", icon: BarChart3 },
+  { href: "/sys-admin/users", label: "用户管理", icon: Users },
+  { href: "/sys-admin/settings", label: "全局设置", icon: Settings },
+  { href: "/sys-admin/maintenance", label: "系统维护", icon: Wrench },
 ];
 
 interface AdminShellProps {
@@ -37,9 +37,9 @@ export function AdminShell({ adminEmail, children }: AdminShellProps) {
     setSigningOut(true);
 
     try {
-      await fetch("/admin/api/logout", { method: "POST" });
+      await fetch("/sys-admin/api/logout", { method: "POST" });
     } finally {
-      router.push("/admin/login");
+      router.push("/sys-admin/login");
       router.refresh();
     }
   }
@@ -61,7 +61,7 @@ export function AdminShell({ adminEmail, children }: AdminShellProps) {
           const Icon = item.icon;
           const active =
             pathname === item.href ||
-            (item.href !== "/admin" && pathname.startsWith(`${item.href}/`));
+            (item.href !== "/sys-admin" && pathname.startsWith(`${item.href}/`));
 
           return (
             <Link

@@ -17,20 +17,22 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 
 // System reserved usernames — cannot be registered
-const RESERVED = new Set([
+const reservedUsernames = [
   "dashboard",
   "auth",
   "api",
-  "_next",
-  "favicon.ico",
-  "public",
-  "admin", // legacy admin
+  "admin",
+  "sys-admin",
+  "sysadmin",
+  "root",
+  "system",
+  "login",
   "linkweb",
   "settings",
-  "appearance",
-  "links",
-  "analytics",
-]);
+];
+const RESERVED_USERNAMES = new Set(
+  reservedUsernames.map((username) => username.toLowerCase())
+);
 
 // Username regex: letters, numbers, underscores, 3-30 chars
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
@@ -78,8 +80,8 @@ export async function POST(request: Request) {
       errors.push("请提供用户名");
     } else if (!USERNAME_REGEX.test(username)) {
       errors.push("用户名只允许英文字母、数字和下划线，长度 3-30 个字符");
-    } else if (RESERVED.has(username)) {
-      errors.push(`用户名 "${username}" 为系统保留字，请使用其他用户名`);
+    } else if (RESERVED_USERNAMES.has(username.toLowerCase())) {
+      errors.push("该用户名已被系统保留，无法注册");
     }
 
     if (!password || password.length < 6) {

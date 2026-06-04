@@ -35,7 +35,7 @@ export async function toggleUserBan(userId: string) {
     },
   });
 
-  revalidatePath("/admin/users");
+  revalidatePath("/sys-admin/users");
 }
 
 export async function toggleUserPermission(
@@ -68,5 +68,5 @@ export async function toggleUserPermission(
     data: { [field]: !currentValue },
   });
 
-  revalidatePath("/admin/users");
+  revalidatePath("/sys-admin/users");
 }

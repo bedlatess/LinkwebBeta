@@ -35,9 +35,10 @@ export default auth(async (req) => {
   // ═══════════════════════════════════════════════════════════════
   //  Admin Guard (independent from regular Auth.js sessions)
   // ═══════════════════════════════════════════════════════════════
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/sys-admin")) {
     const isAdminPublicRoute =
-      pathname === "/admin/login" || pathname.startsWith("/admin/api/login");
+      pathname === "/sys-admin/login" ||
+      pathname.startsWith("/sys-admin/api/login");
 
     if (isAdminPublicRoute) {
       return NextResponse.next();
@@ -46,11 +47,11 @@ export default auth(async (req) => {
     const adminSession = await verifyAdminSessionFromRequest(req);
 
     if (!adminSession) {
-      if (pathname.startsWith("/admin/api")) {
+      if (pathname.startsWith("/sys-admin/api")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
-      const loginUrl = new URL("/admin/login", req.url);
+      const loginUrl = new URL("/sys-admin/login", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }

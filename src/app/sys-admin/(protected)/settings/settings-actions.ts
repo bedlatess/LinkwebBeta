@@ -29,7 +29,7 @@ export async function updateSiteBasics(formData: FormData) {
     },
   });
 
-  revalidatePath("/admin/settings");
+  revalidatePath("/sys-admin/settings");
   revalidatePath("/auth/signin");
 }
 
@@ -48,7 +48,7 @@ export async function toggleRegistrationEnabled() {
     data: { registrationEnabled: !settings.registrationEnabled },
   });
 
-  revalidatePath("/admin/settings");
+  revalidatePath("/sys-admin/settings");
   revalidatePath("/auth/signin");
 }
 
@@ -67,6 +67,6 @@ export async function toggleOauthEnabled() {
     data: { oauthEnabled: !settings.oauthEnabled },
   });
 
-  revalidatePath("/admin/settings");
+  revalidatePath("/sys-admin/settings");
   revalidatePath("/auth/signin");
 }

@@ -15,13 +15,13 @@ export default async function ProtectedAdminLayout({
 }) {
   const cookieStore = await cookies();
   const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
-  const request = new Request("http://linkweb.local/admin", {
+  const request = new Request("http://linkweb.local/sys-admin", {
     headers: token ? { cookie: `${ADMIN_SESSION_COOKIE}=${token}` } : {},
   });
   const adminSession = await verifyAdminSessionFromRequest(request);
 
   if (!adminSession) {
-    redirect("/admin/login");
+    redirect("/sys-admin/login");
   }
 
   return (
