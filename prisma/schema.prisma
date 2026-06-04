@@ -27,6 +27,12 @@ model User {
   username      String?   @unique
   passwordHash  String?   // bcrypt hash for credentials-based auth
   customDomain  String?   @unique // custom domain for white-label (e.g. "link.mybrand.com")
+  isBanned      Boolean   @default(false)
+  bannedAt      DateTime?
+  bannedReason  String?
+  allowCustomCSS  Boolean @default(true)
+  allowCustomFont Boolean @default(true)
+  allowTips       Boolean @default(true)
 
   // Relations
   accounts      Account[]
@@ -36,6 +42,28 @@ model User {
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         String   @default("super_admin")
+  isActive     Boolean  @default(true)
+  tokenVersion Int      @default(0)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SiteSettings {
+  id                  String   @id @default("global")
+  siteTitle           String   @default("LinkWeb")
+  seoDescription      String   @default("Self-hosted link-in-bio platform")
+  registrationEnabled Boolean  @default(true)
+  oauthEnabled        Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
 }
 
 model Account {

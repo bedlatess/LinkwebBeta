@@ -94,7 +94,11 @@ export function SignInContent({
     });
 
     if (result?.error) {
-      setFormError("人机验证未通过，或邮箱密码错误，请重试。");
+      setFormError(
+        result.code === "account_banned"
+          ? "此账号已被系统管理员封禁。"
+          : "人机验证未通过，或邮箱密码错误，请重试。"
+      );
       resetTurnstile();
     } else {
       startTransition(() => {
@@ -247,7 +251,9 @@ export function SignInContent({
               {(formError || error) && (
                 <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
                   {formError ||
-                    (error === "CredentialsSignin"
+                    (searchParams.get("code") === "account_banned"
+                      ? "此账号已被系统管理员封禁。"
+                      : error === "CredentialsSignin"
                       ? "邮箱或密码错误，请重试。"
                       : "登录过程中发生错误，请重试。")}
                 </div>

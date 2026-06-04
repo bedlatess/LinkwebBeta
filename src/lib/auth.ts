@@ -11,11 +11,13 @@
  */
 
 import NextAuth from "next-auth";
+import { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { getGlobalSiteSettings } from "@/lib/site-settings";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import bcrypt from "bcryptjs";
 
@@ -23,6 +25,10 @@ const githubClientId = process.env.GITHUB_CLIENT_ID;
 const githubClientSecret = process.env.GITHUB_SECRET;
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_SECRET;
+
+class AccountBannedError extends CredentialsSignin {
+  code = "account_banned";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -72,12 +78,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: true,
             image: true,
             passwordHash: true,
+            isBanned: true,
           },
         });
 
         if (!user || !user.passwordHash) {
           // No user found, or user has no password (OAuth-only account)
           return null;
+        }
+
+        if (user.isBanned) {
+          console.warn("[auth] banned credentials login blocked", {
+            userId: user.id,
+            email: user.email,
+          });
+          throw new AccountBannedError();
         }
 
         // Verify password
@@ -129,6 +144,45 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   callbacks: {
+    /**
+     * Block banned accounts across Credentials and OAuth sign-in flows.
+     */
+    async signIn({ user, account }) {
+      if (account?.provider && account.provider !== "credentials") {
+        const settings = await getGlobalSiteSettings();
+
+        if (!settings.oauthEnabled) {
+          console.warn("[auth] OAuth sign-in blocked by global settings", {
+            provider: account.provider,
+            email: user.email,
+          });
+          return "/auth/error?error=OAuthDisabled";
+        }
+      }
+
+      const userId = user.id ? String(user.id) : null;
+      const email = user.email?.toLowerCase().trim();
+
+      const dbUser = userId
+        ? await prisma.user.findUnique({
+            where: { id: userId },
+            select: { isBanned: true },
+          })
+        : email
+        ? await prisma.user.findUnique({
+            where: { email },
+            select: { isBanned: true },
+          })
+        : null;
+
+      if (dbUser?.isBanned) {
+        console.warn("[auth] banned sign-in blocked", { userId, email });
+        return "/auth/error?error=AccountBanned";
+      }
+
+      return true;
+    },
+
     /**
      * Enrich the JWT with the user's database ID and provider info.
      */

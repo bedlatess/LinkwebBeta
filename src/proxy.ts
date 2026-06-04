@@ -10,6 +10,7 @@
  */
 
 import { auth } from "@/lib/auth";
+import { verifyAdminSessionFromRequest } from "@/lib/admin-session";
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -30,6 +31,30 @@ export default auth(async (req) => {
   const mainHost = process.env.NEXTAUTH_URL
     ? new URL(process.env.NEXTAUTH_URL).host
     : "localhost:2222";
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Admin Guard (independent from regular Auth.js sessions)
+  // ═══════════════════════════════════════════════════════════════
+  if (pathname.startsWith("/admin")) {
+    const isAdminPublicRoute =
+      pathname === "/admin/login" || pathname.startsWith("/admin/api/login");
+
+    if (isAdminPublicRoute) {
+      return NextResponse.next();
+    }
+
+    const adminSession = await verifyAdminSessionFromRequest(req);
+
+    if (!adminSession) {
+      if (pathname.startsWith("/admin/api")) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const loginUrl = new URL("/admin/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   // ═══════════════════════════════════════════════════════════════
   //  Custom Domain Rewrite (White-label)
@@ -90,6 +115,24 @@ export default auth(async (req) => {
       signInUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(signInUrl);
     }
+
+    const userId = req.auth?.user?.id;
+    if (userId) {
+      try {
+        const user = await getPrisma().user.findUnique({
+          where: { id: userId },
+          select: { isBanned: true },
+        });
+
+        if (user?.isBanned) {
+          const errorUrl = new URL("/auth/error", req.url);
+          errorUrl.searchParams.set("error", "AccountBanned");
+          return NextResponse.redirect(errorUrl);
+        }
+      } catch {
+        return NextResponse.redirect(new URL("/auth/signin", req.url));
+      }
+    }
   }
 
   // Protect API routes — return 401 JSON instead of redirect
@@ -101,6 +144,25 @@ export default auth(async (req) => {
   ) {
     if (!isAuthenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = req.auth?.user?.id;
+    if (userId) {
+      try {
+        const user = await getPrisma().user.findUnique({
+          where: { id: userId },
+          select: { isBanned: true },
+        });
+
+        if (user?.isBanned) {
+          return NextResponse.json(
+            { error: "此账号已被系统管理员封禁" },
+            { status: 403 }
+          );
+        }
+      } catch {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
   }
 

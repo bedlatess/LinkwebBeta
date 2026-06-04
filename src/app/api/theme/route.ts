@@ -47,19 +47,43 @@ export async function PUT(request: Request) {
 
   const body = await request.json();
   const allowedFields: Record<string, unknown> = {};
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      allowCustomCSS: true,
+      allowCustomFont: true,
+      allowTips: true,
+    },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   if (body.bgType !== undefined) allowedFields.bgType = body.bgType;
   if (body.bgValue !== undefined) allowedFields.bgValue = body.bgValue;
   if (body.bgBlur !== undefined) allowedFields.bgBlur = body.bgBlur;
   if (body.buttonStyle !== undefined) allowedFields.buttonStyle = body.buttonStyle;
-  if (body.fontFamily !== undefined) allowedFields.fontFamily = body.fontFamily;
-  if (body.customCSS !== undefined) allowedFields.customCSS = body.customCSS;
+  if (body.fontFamily !== undefined) {
+    allowedFields.fontFamily = user.allowCustomFont ? body.fontFamily : null;
+  }
+  if (body.customCSS !== undefined) {
+    allowedFields.customCSS = user.allowCustomCSS ? body.customCSS : null;
+  }
   // Tip fields
-  if (body.tipEnabled !== undefined) allowedFields.tipEnabled = body.tipEnabled;
-  if (body.tipTitle !== undefined) allowedFields.tipTitle = body.tipTitle;
-  if (body.paypalEmail !== undefined) allowedFields.paypalEmail = body.paypalEmail;
-  if (body.customTipUrl !== undefined) allowedFields.customTipUrl = body.customTipUrl;
-  if (body.cryptoAddress !== undefined) allowedFields.cryptoAddress = body.cryptoAddress;
+  if (user.allowTips) {
+    if (body.tipEnabled !== undefined) allowedFields.tipEnabled = body.tipEnabled;
+    if (body.tipTitle !== undefined) allowedFields.tipTitle = body.tipTitle;
+    if (body.paypalEmail !== undefined) allowedFields.paypalEmail = body.paypalEmail;
+    if (body.customTipUrl !== undefined) allowedFields.customTipUrl = body.customTipUrl;
+    if (body.cryptoAddress !== undefined) allowedFields.cryptoAddress = body.cryptoAddress;
+  } else {
+    allowedFields.tipEnabled = false;
+    allowedFields.tipTitle = null;
+    allowedFields.paypalEmail = null;
+    allowedFields.customTipUrl = null;
+    allowedFields.cryptoAddress = null;
+  }
 
   const config = await prisma.themeConfig.upsert({
     where: { userId: session.user.id },

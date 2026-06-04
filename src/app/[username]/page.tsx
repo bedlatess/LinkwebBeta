@@ -31,10 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
   const user = await prisma.user.findUnique({
     where: { username },
-    select: { name: true, bio: true },
+    select: { name: true, bio: true, isBanned: true },
   });
 
-  if (!user) return { title: "404 — Not Found" };
+  if (!user || user.isBanned) return { title: "404 — Not Found" };
 
   return {
     title: `${user.name ?? username} — LinkWeb`,
@@ -68,6 +68,10 @@ export default async function PublicPage({ params }: Props) {
   });
 
   if (!user) {
+    notFound();
+  }
+
+  if (user.isBanned) {
     notFound();
   }
 

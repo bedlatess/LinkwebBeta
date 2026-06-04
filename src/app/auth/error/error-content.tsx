@@ -22,6 +22,8 @@ const errorMessages: Record<string, string> = {
   OAuthAccountNotLinked: "该邮箱已通过其他方式注册，请使用原登录方式。",
   EmailSignin: "邮件发送失败，请检查邮箱地址。",
   CredentialsSignin: "邮箱或密码错误，请重试。",
+  AccountBanned: "此账号已被系统管理员封禁。",
+  OAuthDisabled: "当前站点已关闭第三方登录。",
   SessionRequired: "请先登录后再访问此页面。",
   default: "身份验证过程中发生未知错误，请重试。",
 };

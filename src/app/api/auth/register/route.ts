@@ -10,7 +10,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { isRegistrationEnabled } from "@/lib/registration";
+import { isDatabaseRegistrationEnabled } from "@/lib/site-settings";
 import { prisma } from "@/lib/prisma";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import bcrypt from "bcryptjs";
@@ -37,9 +37,9 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 export async function POST(request: Request) {
   try {
-    if (!isRegistrationEnabled()) {
+    if (!(await isDatabaseRegistrationEnabled())) {
       return NextResponse.json(
-        { error: "当前暂未开放注册，请联系管理员开通账号。" },
+        { error: "当前站点已关闭新用户注册" },
         { status: 403 }
       );
     }

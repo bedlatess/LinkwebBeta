@@ -48,6 +48,12 @@ async function main() {
         "username" TEXT,
         "passwordHash" TEXT,
         "customDomain" TEXT,
+        "isBanned" BOOLEAN NOT NULL DEFAULT false,
+        "bannedAt" DATETIME,
+        "bannedReason" TEXT,
+        "allowCustomCSS" BOOLEAN NOT NULL DEFAULT true,
+        "allowCustomFont" BOOLEAN NOT NULL DEFAULT true,
+        "allowTips" BOOLEAN NOT NULL DEFAULT true,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -56,6 +62,38 @@ async function main() {
 
   await addColumn("User", "passwordHash", "TEXT");
   await addColumn("User", "customDomain", "TEXT");
+  await addColumn("User", "isBanned", "BOOLEAN NOT NULL DEFAULT false");
+  await addColumn("User", "bannedAt", "DATETIME");
+  await addColumn("User", "bannedReason", "TEXT");
+  await addColumn("User", "allowCustomCSS", "BOOLEAN NOT NULL DEFAULT true");
+  await addColumn("User", "allowCustomFont", "BOOLEAN NOT NULL DEFAULT true");
+  await addColumn("User", "allowTips", "BOOLEAN NOT NULL DEFAULT true");
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "AdminUser" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "email" TEXT NOT NULL,
+      "name" TEXT,
+      "passwordHash" TEXT NOT NULL,
+      "role" TEXT NOT NULL DEFAULT 'super_admin',
+      "isActive" BOOLEAN NOT NULL DEFAULT true,
+      "tokenVersion" INTEGER NOT NULL DEFAULT 0,
+      "lastLoginAt" DATETIME,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "SiteSettings" (
+      "id" TEXT NOT NULL PRIMARY KEY DEFAULT 'global',
+      "siteTitle" TEXT NOT NULL DEFAULT 'LinkWeb',
+      "seoDescription" TEXT NOT NULL DEFAULT 'Self-hosted link-in-bio platform',
+      "registrationEnabled" BOOLEAN NOT NULL DEFAULT true,
+      "oauthEnabled" BOOLEAN NOT NULL DEFAULT true,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "Account" (
@@ -159,6 +197,10 @@ async function main() {
   await createIndex(
     "User_customDomain_key",
     'CREATE UNIQUE INDEX "User_customDomain_key" ON "User"("customDomain")'
+  );
+  await createIndex(
+    "AdminUser_email_key",
+    'CREATE UNIQUE INDEX "AdminUser_email_key" ON "AdminUser"("email")'
   );
   await createIndex(
     "Account_provider_providerAccountId_key",
