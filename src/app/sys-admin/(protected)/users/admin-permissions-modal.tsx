@@ -3,7 +3,8 @@
 import type { AdminPermissionField } from "@/lib/admin-action-auth";
 import { ShieldAlert, ShieldCheck, SlidersHorizontal, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import {
   updateAdminPermissions,
   type AdminPermissionInput,
@@ -73,10 +74,32 @@ export function AdminPermissionsModal({
     setPermissions((current) => ({ ...current, [field]: value }));
   }
 
-  function resetAndClose() {
+  const resetAndClose = useCallback(() => {
     setPermissions(initialPermissions);
     setOpen(false);
-  }
+  }, [initialPermissions]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        resetAndClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, resetAndClose]);
 
   function handleSave() {
     if (highRiskChanged) {
@@ -99,6 +122,134 @@ export function AdminPermissionsModal({
     });
   }
 
+  const modal = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
+      <button
+        type="button"
+        aria-label="关闭权限面板"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={resetAndClose}
+      />
+
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`admin-permissions-${userId}`}
+        className="relative z-10 flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/50"
+      >
+        <div className="shrink-0 border-b border-white/10 bg-white/[0.035] px-6 py-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-200/70">
+                Admin Permissions
+              </p>
+              <h2
+                id={`admin-permissions-${userId}`}
+                className="mt-2 text-xl font-semibold tracking-tight text-white"
+              >
+                {label}
+              </h2>
+              <p className="mt-2 text-sm text-white/45">
+                精细控制普通管理员可进入的模块与可执行的高危动作。
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="关闭权限面板"
+              onClick={resetAndClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/50 transition hover:bg-white/[0.08] hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-6">
+          {permissionOptions.map((item) => {
+            const enabled = permissions[item.field];
+
+            return (
+              <label
+                key={item.field}
+                className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition ${
+                  item.highRisk
+                    ? "border-red-400/18 bg-red-500/[0.045] hover:bg-red-500/[0.07]"
+                    : "border-white/10 bg-white/[0.035] hover:bg-white/[0.055]"
+                }`}
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <div
+                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
+                      item.highRisk
+                        ? "border-red-300/20 bg-red-400/12 text-red-200"
+                        : "border-emerald-300/20 bg-emerald-400/12 text-emerald-200"
+                    }`}
+                  >
+                    {item.highRisk ? (
+                      <ShieldAlert className="h-4 w-4" />
+                    ) : (
+                      <ShieldCheck className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white/85">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-white/42">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+
+                <input
+                  type="checkbox"
+                  checked={enabled}
+                  onChange={(event) =>
+                    setPermission(item.field, event.target.checked)
+                  }
+                  className="sr-only"
+                />
+                <span
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition ${
+                    enabled
+                      ? item.highRisk
+                        ? "border-red-300/30 bg-red-400/45"
+                        : "border-emerald-300/30 bg-emerald-400/45"
+                      : "border-white/10 bg-white/10"
+                  }`}
+                >
+                  <span
+                    className={`h-4.5 w-4.5 rounded-full bg-white shadow-lg transition ${
+                      enabled ? "translate-x-5" : "translate-x-1"
+                    }`}
+                  />
+                </span>
+              </label>
+            );
+          })}
+        </div>
+
+        <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-white/10 bg-white/[0.025] px-6 py-5 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={resetAndClose}
+            className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white/60 transition hover:bg-white/[0.08] hover:text-white"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={pending}
+            className="rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {pending ? "保存中..." : "保存权限"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+
   return (
     <>
       <button
@@ -110,124 +261,7 @@ export function AdminPermissionsModal({
         编辑权限
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-          <button
-            type="button"
-            aria-label="关闭权限面板"
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={resetAndClose}
-          />
-
-          <section className="relative z-10 flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/50">
-            <div className="shrink-0 border-b border-white/10 bg-white/[0.035] px-6 py-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-200/70">
-                    Admin Permissions
-                  </p>
-                  <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">
-                    {label}
-                  </h2>
-                  <p className="mt-2 text-sm text-white/45">
-                    精细控制普通管理员可进入的模块与可执行的高危动作。
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={resetAndClose}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/50 transition hover:bg-white/[0.08] hover:text-white"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-6">
-              {permissionOptions.map((item) => {
-                const enabled = permissions[item.field];
-
-                return (
-                  <label
-                    key={item.field}
-                    className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border p-4 transition ${
-                      item.highRisk
-                        ? "border-red-400/18 bg-red-500/[0.045] hover:bg-red-500/[0.07]"
-                        : "border-white/10 bg-white/[0.035] hover:bg-white/[0.055]"
-                    }`}
-                  >
-                    <div className="flex min-w-0 items-start gap-3">
-                      <div
-                        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
-                          item.highRisk
-                            ? "border-red-300/20 bg-red-400/12 text-red-200"
-                            : "border-emerald-300/20 bg-emerald-400/12 text-emerald-200"
-                        }`}
-                      >
-                        {item.highRisk ? (
-                          <ShieldAlert className="h-4 w-4" />
-                        ) : (
-                          <ShieldCheck className="h-4 w-4" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-white/85">
-                          {item.label}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-white/42">
-                          {item.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      checked={enabled}
-                      onChange={(event) =>
-                        setPermission(item.field, event.target.checked)
-                      }
-                      className="sr-only"
-                    />
-                    <span
-                      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition ${
-                        enabled
-                          ? item.highRisk
-                            ? "border-red-300/30 bg-red-400/45"
-                            : "border-emerald-300/30 bg-emerald-400/45"
-                          : "border-white/10 bg-white/10"
-                      }`}
-                    >
-                      <span
-                        className={`h-4.5 w-4.5 rounded-full bg-white shadow-lg transition ${
-                          enabled ? "translate-x-5" : "translate-x-1"
-                        }`}
-                      />
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-
-            <div className="shrink-0 flex flex-col-reverse gap-3 border-t border-white/10 bg-white/[0.025] px-6 py-5 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={resetAndClose}
-                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white/60 transition hover:bg-white/[0.08] hover:text-white"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={pending}
-                className="rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {pending ? "保存中" : "保存权限"}
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
+      {open ? createPortal(modal, document.body) : null}
     </>
   );
 }
