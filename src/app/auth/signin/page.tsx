@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { SignInContent } from "./signin-content";
 import { getGlobalSiteSettings } from "@/lib/site-settings";
 
+export const dynamic = "force-dynamic";
+
 /**
  * LinkWeb Sign-In Page — Wrapped in Suspense for useSearchParams()
  */

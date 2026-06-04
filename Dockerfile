@@ -33,6 +33,11 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
+# Build-time dummy SQLite database. Runtime DATABASE_URL is provided by
+# Docker Compose / environment and points at the mounted production DB.
+RUN touch /tmp/dummy.db
+ENV DATABASE_URL="file:/tmp/dummy.db"
+
 # Build Next.js (output: standalone)
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build

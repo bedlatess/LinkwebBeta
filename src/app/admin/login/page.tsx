@@ -2,6 +2,8 @@ import { ShieldCheck } from "lucide-react";
 import { Suspense } from "react";
 import { AdminLoginForm } from "./admin-login-form";
 
+export const dynamic = "force-dynamic";
+
 export default function AdminLoginPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 text-white">

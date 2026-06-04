@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import { PublicLinkPage } from "./public-link-page";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Public Visitor Link Page — SSR
  *

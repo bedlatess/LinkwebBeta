@@ -6,6 +6,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminShell } from "../admin-shell";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProtectedAdminLayout({
   children,
 }: {
