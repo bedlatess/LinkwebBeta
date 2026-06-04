@@ -80,7 +80,16 @@ export default async function HomePage() {
           <header className="flex items-center justify-between border-b border-white/10 pb-5">
             <Link href="/" className="flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-teal-300/30 bg-teal-300/10">
-                <Link2 className="h-4 w-4 text-teal-200" />
+                {settings.siteIconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={settings.siteIconUrl}
+                    alt=""
+                    className="h-full w-full rounded-lg object-cover"
+                  />
+                ) : (
+                  <Link2 className="h-4 w-4 text-teal-200" />
+                )}
               </span>
               <span className="text-sm font-semibold tracking-[0.28em] text-white/80">
                 LINKWEB

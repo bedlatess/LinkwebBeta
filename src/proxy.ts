@@ -11,6 +11,7 @@
 
 import { auth } from "@/lib/auth";
 import { verifyAdminSessionFromRequest } from "@/lib/admin-session";
+import { findMatchingIpBanRule, getClientIp } from "@/lib/ip-ban";
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -33,6 +34,24 @@ export default auth(async (req) => {
     : "localhost:2222";
   const isSysAdminRoute =
     pathname === "/sys-admin" || pathname.startsWith("/sys-admin/");
+  const adminSession = await verifyAdminSessionFromRequest(req);
+  const normalSessionUserId = req.auth?.user?.id;
+  let hasNormalAdminSession = false;
+
+  if (normalSessionUserId) {
+    try {
+      const user = await getPrisma().user.findUnique({
+        where: { id: normalSessionUserId },
+        select: { role: true, isBanned: true },
+      });
+
+      hasNormalAdminSession =
+        user?.role === "ADMIN" && user.isBanned !== true;
+    } catch {
+      hasNormalAdminSession = false;
+    }
+  }
+  const isAdminActorRequest = Boolean(adminSession || hasNormalAdminSession);
 
   // ═══════════════════════════════════════════════════════════════
   //  Admin Guard (independent from regular Auth.js sessions)
@@ -44,24 +63,6 @@ export default auth(async (req) => {
 
     if (isAdminPublicRoute) {
       return NextResponse.next();
-    }
-
-    const adminSession = await verifyAdminSessionFromRequest(req);
-    const normalSessionUserId = req.auth?.user?.id;
-    let hasNormalAdminSession = false;
-
-    if (normalSessionUserId) {
-      try {
-        const user = await getPrisma().user.findUnique({
-          where: { id: normalSessionUserId },
-          select: { role: true, isBanned: true },
-        });
-
-        hasNormalAdminSession =
-          user?.role === "ADMIN" && user.isBanned !== true;
-      } catch {
-        hasNormalAdminSession = false;
-      }
     }
 
     if (!adminSession && !hasNormalAdminSession) {
@@ -76,6 +77,39 @@ export default auth(async (req) => {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  //  IP Ban Guard (admin console and admin actors are fail-open)
+  // ═══════════════════════════════════════════════════════════════
+  const isBannedPage = pathname === "/banned";
+  const isIpBanExempt =
+    isSysAdminRoute ||
+    isAdminActorRequest ||
+    isBannedPage ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon.ico");
+
+  if (!isIpBanExempt) {
+    try {
+      const clientIp = getClientIp(req.headers);
+      const matchedRule = await findMatchingIpBanRule(getPrisma(), clientIp);
+
+      if (matchedRule) {
+        if (pathname.startsWith("/api")) {
+          return NextResponse.json(
+            { error: "Access denied" },
+            { status: 403 }
+          );
+        }
+
+        const bannedUrl = new URL("/banned", req.url);
+        bannedUrl.searchParams.set("type", "ip");
+        return NextResponse.redirect(bannedUrl);
+      }
+    } catch {
+      // A database hiccup should not lock out legitimate traffic.
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   //  Global Maintenance Mode (admin routes stay reachable)
   // ═══════════════════════════════════════════════════════════════
   const isMaintenancePage = pathname === "/maintenance";
@@ -85,7 +119,7 @@ export default auth(async (req) => {
     pathname.startsWith("/robots.txt") ||
     pathname.startsWith("/sitemap.xml");
 
-  if (!isSysAdminRoute && !isMaintenancePage && !isNextAsset) {
+  if (!isSysAdminRoute && !isBannedPage && !isMaintenancePage && !isNextAsset) {
     try {
       const settings = await getPrisma().siteSettings.findUnique({
         where: { id: "global" },
@@ -175,9 +209,7 @@ export default auth(async (req) => {
         });
 
         if (user?.isBanned) {
-          const errorUrl = new URL("/auth/error", req.url);
-          errorUrl.searchParams.set("error", "AccountBanned");
-          return NextResponse.redirect(errorUrl);
+          return NextResponse.redirect(new URL("/banned?type=account", req.url));
         }
       } catch {
         return NextResponse.redirect(new URL("/auth/signin", req.url));

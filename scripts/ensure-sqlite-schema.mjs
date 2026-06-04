@@ -162,6 +162,7 @@ async function main() {
       "siteTitle" TEXT NOT NULL DEFAULT 'LinkWeb',
       "seoDescription" TEXT NOT NULL DEFAULT 'Self-hosted link-in-bio platform',
       "supportEmail" TEXT,
+      "siteIconUrl" TEXT,
       "announcementEnabled" BOOLEAN NOT NULL DEFAULT false,
       "announcementText" TEXT,
       "footerText" TEXT NOT NULL DEFAULT '© 2026 PAWN. All rights reserved.',
@@ -178,6 +179,7 @@ async function main() {
     "BOOLEAN NOT NULL DEFAULT false"
   );
   await addColumn("SiteSettings", "supportEmail", "TEXT");
+  await addColumn("SiteSettings", "siteIconUrl", "TEXT");
   await addColumn(
     "SiteSettings",
     "announcementEnabled",
@@ -194,6 +196,18 @@ async function main() {
     "githubUrl",
     "TEXT NOT NULL DEFAULT 'https://github.com/bedlatess/LinkwebBeta'"
   );
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "IpBanRule" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "value" TEXT NOT NULL,
+      "reason" TEXT,
+      "source" TEXT NOT NULL DEFAULT 'manual',
+      "isActive" BOOLEAN NOT NULL DEFAULT true,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "Account" (
@@ -305,6 +319,18 @@ async function main() {
   await createIndex(
     "AdminUser_email_key",
     'CREATE UNIQUE INDEX "AdminUser_email_key" ON "AdminUser"("email")'
+  );
+  await createIndex(
+    "IpBanRule_value_key",
+    'CREATE UNIQUE INDEX "IpBanRule_value_key" ON "IpBanRule"("value")'
+  );
+  await createIndex(
+    "IpBanRule_isActive_idx",
+    'CREATE INDEX "IpBanRule_isActive_idx" ON "IpBanRule"("isActive")'
+  );
+  await createIndex(
+    "IpBanRule_source_idx",
+    'CREATE INDEX "IpBanRule_source_idx" ON "IpBanRule"("source")'
   );
   await createIndex(
     "Account_provider_providerAccountId_key",

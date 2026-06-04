@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import { PublicLinkPage } from "./public-link-page";
@@ -20,7 +20,6 @@ const RESERVED = new Set([
   "dashboard",
   "auth",
   "api",
-  "admin",
   "sys-admin",
   "sysadmin",
   "root",
@@ -44,7 +43,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     select: { name: true, bio: true, isBanned: true },
   });
 
-  if (!user || user.isBanned) return { title: "404 — Not Found" };
+  if (!user) return { title: "404 — Not Found" };
+  if (user.isBanned) return { title: "访问已被限制 — LinkWeb" };
 
   return {
     title: `${user.name ?? username} — LinkWeb`,
@@ -82,7 +82,7 @@ export default async function PublicPage({ params }: Props) {
   }
 
   if (user.isBanned) {
-    notFound();
+    redirect("/banned?type=account");
   }
 
   const theme = user.themeConfig ?? {

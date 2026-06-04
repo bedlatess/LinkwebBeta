@@ -6,13 +6,34 @@ import {
   type AdminPermissionField,
 } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+function withToast(path: string, message: string) {
+  return `${path}?toast=${encodeURIComponent(message)}`;
+}
 
 const USER_PERMISSION_FIELDS = [
   "allowCustomCSS",
   "allowCustomFont",
   "allowTips",
 ] as const;
+
+const RESERVED_USERNAMES = new Set([
+  "dashboard",
+  "auth",
+  "api",
+  "sys-admin",
+  "sysadmin",
+  "root",
+  "system",
+  "login",
+  "linkweb",
+  "settings",
+  "_next",
+]);
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 const ADMIN_PERMISSION_FIELDS = [
   "permManageUsers",
@@ -59,6 +80,60 @@ export async function toggleUserBan(userId: string) {
   });
 
   revalidatePath("/sys-admin/users");
+  redirect(withToast("/sys-admin/users", nextBanned ? "封禁用户成功" : "解封用户成功"));
+}
+
+export async function createManagedUser(formData: FormData) {
+  await requireSuperAdminActionSession();
+
+  const email = String(formData.get("email") ?? "").toLowerCase().trim();
+  const username = String(formData.get("username") ?? "").toLowerCase().trim();
+  const name = String(formData.get("name") ?? "").trim() || username;
+  const password = String(formData.get("password") ?? "");
+
+  if (!email || !email.includes("@")) {
+    throw new Error("请填写有效邮箱。");
+  }
+
+  if (!USERNAME_REGEX.test(username)) {
+    throw new Error("用户名只允许英文字母、数字和下划线，长度 3-30 个字符。");
+  }
+
+  if (RESERVED_USERNAMES.has(username)) {
+    throw new Error("该用户名已被系统保留，无法创建。");
+  }
+
+  if (password.length < 8) {
+    throw new Error("初始密码至少需要 8 个字符。");
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        email,
+        username,
+        name,
+        passwordHash,
+      },
+      select: { id: true },
+    });
+
+    await tx.themeConfig.create({
+      data: {
+        userId: user.id,
+        bgType: "gradient",
+        bgValue: "linear-gradient(135deg, #0f172a 0%, #064e3b 100%)",
+        bgBlur: 10,
+        buttonStyle: "rounded",
+      },
+      select: { id: true },
+    });
+  });
+
+  revalidatePath("/sys-admin/users");
+  redirect(withToast("/sys-admin/users", "新增用户成功"));
 }
 
 export async function deleteUser(userId: string) {
@@ -78,6 +153,7 @@ export async function deleteUser(userId: string) {
   });
 
   revalidatePath("/sys-admin/users");
+  redirect(withToast("/sys-admin/users", "删除用户成功"));
 }
 
 export async function toggleUserPermission(
@@ -109,6 +185,7 @@ export async function toggleUserPermission(
   });
 
   revalidatePath("/sys-admin/users");
+  redirect(withToast("/sys-admin/users", "用户高级能力已更新"));
 }
 
 export async function toggleAdminRole(targetUserId: string) {
@@ -167,6 +244,7 @@ export async function toggleAdminRole(targetUserId: string) {
   });
 
   revalidatePath("/sys-admin/users");
+  redirect(withToast("/sys-admin/users", promoting ? "已设为管理员" : "已撤销管理员"));
 }
 
 export async function updateAdminPermissions(
@@ -252,4 +330,5 @@ export async function updateAdminPermissions(
   });
 
   revalidatePath("/sys-admin/users");
+  redirect(withToast("/sys-admin/users", "管理员权限保存成功"));
 }

@@ -47,6 +47,7 @@ interface SignInContentProps {
   siteTitle: string;
   seoDescription: string;
   supportEmail: string | null;
+  siteIconUrl: string | null;
 }
 
 export function SignInContent({
@@ -56,6 +57,7 @@ export function SignInContent({
   siteTitle,
   seoDescription,
   supportEmail,
+  siteIconUrl,
 }: SignInContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -146,7 +148,16 @@ export function SignInContent({
             {/* Logo & Title */}
             <div className="mb-8 text-center">
               <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
-                <Link2 className="h-7 w-7 text-white" />
+                {siteIconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={siteIconUrl}
+                    alt=""
+                    className="h-full w-full rounded-xl object-cover"
+                  />
+                ) : (
+                  <Link2 className="h-7 w-7 text-white" />
+                )}
               </div>
               <h1 className="text-2xl font-bold tracking-tight text-white">
                 {siteTitle}

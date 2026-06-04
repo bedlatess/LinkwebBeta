@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminPermissionsModal } from "./admin-permissions-modal";
+import { CreateUserModal } from "./create-user-modal";
 import { DeleteUserButton } from "./delete-user-button";
 import {
   deleteUser,
@@ -151,24 +152,27 @@ export default async function AdminUsersPage() {
               按用户资产卡片集中处理封禁、编辑、权限、权益和高危删除操作。
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-            <div className="px-3 py-2">
-              <p className="text-xs text-white/35">用户</p>
-              <p className="mt-1 text-lg font-semibold text-white">
-                {users.length}
-              </p>
-            </div>
-            <div className="px-3 py-2">
-              <p className="text-xs text-white/35">管理员</p>
-              <p className="mt-1 text-lg font-semibold text-amber-100">
-                {users.filter((user) => user.role === "ADMIN").length}
-              </p>
-            </div>
-            <div className="px-3 py-2">
-              <p className="text-xs text-white/35">封禁</p>
-              <p className="mt-1 text-lg font-semibold text-red-100">
-                {users.filter((user) => user.isBanned).length}
-              </p>
+          <div className="flex flex-col gap-3">
+            {isSuperAdmin && <CreateUserModal />}
+            <div className="grid grid-cols-3 gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+              <div className="px-3 py-2">
+                <p className="text-xs text-white/35">用户</p>
+                <p className="mt-1 text-lg font-semibold text-white">
+                  {users.length}
+                </p>
+              </div>
+              <div className="px-3 py-2">
+                <p className="text-xs text-white/35">管理员</p>
+                <p className="mt-1 text-lg font-semibold text-amber-100">
+                  {users.filter((user) => user.role === "ADMIN").length}
+                </p>
+              </div>
+              <div className="px-3 py-2">
+                <p className="text-xs text-white/35">封禁</p>
+                <p className="mt-1 text-lg font-semibold text-red-100">
+                  {users.filter((user) => user.isBanned).length}
+                </p>
+              </div>
             </div>
           </div>
         </div>

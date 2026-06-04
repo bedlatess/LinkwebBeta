@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { AdminToast } from "./admin-toast";
 import { SuperAdminPasswordModal } from "./super-admin-password-modal";
 
 interface AdminShellProps {
@@ -132,6 +133,7 @@ export function AdminShell({ actor, adminEmail, children }: AdminShellProps) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      <AdminToast />
       <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:44px_44px]" />
       <div className="pointer-events-none fixed -left-24 top-12 h-72 w-72 rounded-full bg-emerald-400/10 blur-[110px]" />
       <div className="pointer-events-none fixed bottom-0 right-0 h-80 w-80 rounded-full bg-cyan-400/10 blur-[120px]" />

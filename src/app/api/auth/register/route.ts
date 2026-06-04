@@ -21,7 +21,6 @@ const reservedUsernames = [
   "dashboard",
   "auth",
   "api",
-  "admin",
   "sys-admin",
   "sysadmin",
   "root",

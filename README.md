@@ -3,49 +3,59 @@
 > 极客范、数据自主的个人链接聚合中心。  
 > Self-hosted Link-in-bio control plane for creators, hackers, builders, and small teams.
 
-Linkweb 是一个开源自托管的 Link-in-bio 平台。它把个人主页、链接管理、主题外观、点击分析、打赏变现和自定义域名绑定收进一套可部署、可迁移、可掌控的系统里。
+Linkweb 是一个开源自托管的 Link-in-bio 平台。它把公开个人主页、链接管理、主题外观、点击分析、打赏变现、自定义域名和系统管理后台整合进一套可部署、可迁移、可掌控的系统里。
 
-不再把入口交给第三方平台，不再把访问数据交给黑箱。Linkweb 的目标很简单：你的链接、你的主题、你的域名、你的数据库。
+它的目标很直接：你的链接、你的主题、你的域名、你的数据库。
 
 ## 🌟 项目简介
 
-Linkweb 是一个现代化个人链接聚合中心，适合用于：
+Linkweb 适合这些场景：
 
 - 创作者主页：聚合社媒、作品集、打赏入口和联系方式。
 - 开源项目入口：统一展示文档、仓库、路线图、社区和赞助方式。
 - 独立站轻量门户：用自定义域名承载自己的公开身份。
 - 自托管实验室：用 SQLite + Docker 快速点火，也能继续扩展为更大的服务。
+- 小团队链接基础设施：用系统后台管理用户、内容、权限、站点开关和安全规则。
 
-它不是一个营销页生成器，而是一套面向数据自主的个人入口基础设施。
+公开个人主页使用 `/:username` 路由；系统管理后台固定在 `/sys-admin`。`admin` 不再是系统后台路径，可以作为普通用户的公开主页用户名使用。
 
 ## ✨ 核心特性
 
 - **响应式公开主页**  
-  自动适配桌面端与移动端，展示头像、昵称、简介、链接列表和个性主题。
+  自动适配桌面端与移动端，展示头像、昵称、简介、链接列表、主题、字体和高级 CSS。
 
 - **拖拽排序链接管理**  
-  后台支持链接新增、编辑、删除、显示/隐藏和拖拽排序，失败时自动回滚前端顺序。
+  后台支持链接新增、编辑、删除、显示/隐藏和拖拽排序，后端同步失败时自动回滚前端顺序。
 
 - **高级主题自定义**  
-  支持背景颜色/渐变、按钮圆角、模糊效果、多套预设主题，以及自定义 CSS。
-
-- **字体切换**  
-  支持系统默认、Serif、Mono、Sans-serif 字体风格，让公开主页更贴近个人气质。
+  支持背景颜色/渐变、按钮圆角、模糊效果、多套预设主题、自定义 CSS、系统默认/Serif/Mono/Sans-serif 字体切换。
 
 - **去中心化打赏变现**  
-  支持 PayPal 邮箱、自定义赞助链接（BuyMeACoffee / Ko-fi / 爱发电等）和 BTC/ETH/SOL 等加密货币地址。
+  支持 PayPal 邮箱、自定义赞助链接（BuyMeACoffee / Ko-fi / 爱发电等）和加密货币收款地址。
+
+- **站点级品牌配置**
+  后台可配置 Site Title、SEO Description、公告、页脚、GitHub 地址、支持邮箱和站点图标。站点图标支持外链或后台上传。
 
 - **点击日志与防刷限流**  
-  点击统计使用加盐 IP 哈希保护隐私，并对公开 `/api/visit` 接口加入内存限流，降低恶意刷写对 SQLite 的冲击。
+  `/api/visit` 使用 `NEXTAUTH_SECRET` 加盐哈希 IP，不存储原始 IP；接口带 1 分钟 60 次的限流保护，异常高频 IP 会自动写入封禁规则。
 
-- **数据分析面板**  
-  提供 7 日访问趋势、总点击量、热门链接 Top 5、当前可见链接数等基础运营指标。
+- **账号封禁与封禁页**
+  被封禁用户无法登录，公开主页会跳转到专属 `/banned` 页面；IP 被封禁时也会显示同一套安全提示页。
+
+- **系统管理后台**
+  `/sys-admin` 支持独立超级管理员账号和被提权的普通管理员账号，内置用户管理、内容审查、全局设置、数据清理、IP 黑名单等模块。
+
+- **精细化权限控制**
+  普通管理员可被授予查看用户、封禁用户、编辑用户、重置密码、内容审查、站点配置、维护模式、数据清理等细分权限；高危权限带二次确认。
+
+- **IP/CIDR 封禁**
+  支持手动封禁单 IP 或 CIDR 网段，也支持点击接口自动检测恶意流量后封禁。为避免误封，`/sys-admin` 后台、独立超级管理员会话和普通管理员会话会自动进入白名单；新增手动规则时也会阻止保存命中当前操作者 IP 的规则。
 
 - **自定义域名绑定**  
   用户可绑定自己的域名，服务端根据 Host 自动 rewrite 到对应公开主页。
 
 - **自托管部署友好**  
-  内置 Dockerfile、Docker Compose、Systemd 服务模板和 Nginx 示例配置。
+  内置 Dockerfile、Docker Compose、Systemd 服务模板、Nginx 示例配置和生产启动脚本。
 
 ## 🛠️ 技术栈
 
@@ -56,7 +66,8 @@ Linkweb 是一个现代化个人链接聚合中心，适合用于：
 | Language | TypeScript |
 | Styling | Tailwind CSS v4 |
 | Database | Prisma + SQLite |
-| Auth | NextAuth.js v5 |
+| Auth | Auth.js / NextAuth.js v5 |
+| Admin Session | jose + HttpOnly Cookie |
 | State | Zustand |
 | Drag & Drop | dnd-kit |
 | Charts | Recharts |
@@ -96,22 +107,28 @@ GitHub / Google OAuth 可选；未配置时登录页会自动隐藏对应按钮�
 
 ### 3. 对齐数据库迁移
 
-本地开发环境已内置启动引导：`npm run dev` 会自动创建 `.env`、同步 SQLite 表结构，并写入默认测试账号。
-
-如果你希望手动对齐数据库，也可以执行：
-
 ```bash
 npx prisma migrate deploy
-npx prisma db seed
+npx prisma generate
 ```
 
-默认种子账号：
+本地开发也可以使用：
 
-```text
-admin@linkweb.local / admin123
+```bash
+npx prisma migrate dev
 ```
 
-### 4. 启动开发服务器
+### 4. 初始化账号
+
+普通测试账号可通过注册页创建；独立超级管理员必须通过服务器 CLI 创建：
+
+```bash
+npm run admin:create -- --email=admin@pawn.eu.org --name="PAWN"
+```
+
+脚本会提示输入密码，并将密码用 bcrypt 哈希后写入 `AdminUser` 表。
+
+### 5. 启动开发服务器
 
 ```bash
 npm run dev
@@ -122,6 +139,27 @@ npm run dev
 ```text
 http://localhost:2222
 ```
+
+## 🧑‍💻 管理后台
+
+后台入口：
+
+```text
+http://localhost:2222/sys-admin
+```
+
+后台支持两条登录链路：
+
+- **超级管理员**：由 `scripts/create-admin.ts` 或 `scripts/create-admin.mjs` 在服务器终端创建，拥有全部权限。
+- **普通管理员**：普通 `User` 被超级管理员提权为 `ADMIN` 后，可用自己的邮箱和密码登录后台，只能看到被授权的菜单和操作。
+
+后台模块：
+
+- 仪表盘：总用户、总链接、活跃管理员等数据。
+- 用户管理：新增用户、封禁/解封、删除、编辑资料、重置密码、权限配置。
+- 内容审查：查看全站链接池，删除违规链接。
+- 全局设置：站点标题、SEO、公告、页脚、OAuth、注册开关、维护模式、站点图标。
+- 数据清理：清理过期会话、空链接，管理 IP/CIDR 封禁规则。
 
 ## 🐳 生产部署
 
@@ -137,7 +175,7 @@ Docker Compose 启动示例：
 ```bash
 docker compose up -d --build
 docker compose exec linkweb npx prisma migrate deploy
-docker compose exec linkweb npx prisma db seed
+docker compose exec linkweb npx prisma generate
 ```
 
 默认映射：
@@ -160,16 +198,21 @@ PORT=8080 docker compose up -d --build
 ```text
 src/
 ├── app/
-│   ├── page.tsx                # 产品首页
-│   ├── [username]/             # 公开个人主页
-│   ├── auth/                   # 登录、注册、认证错误页
-│   ├── dashboard/              # 后台管理界面
-│   └── api/                    # Next.js Route Handlers
+│   ├── page.tsx                 # 产品首页
+│   ├── [username]/              # 公开个人主页
+│   ├── banned/                  # 账号/IP 封禁提示页
+│   ├── auth/                    # 前台登录、注册、认证页面
+│   ├── dashboard/               # 普通用户控制台
+│   ├── sys-admin/               # 系统管理后台
+│   └── api/                     # Next.js Route Handlers
 ├── lib/
-│   ├── auth.ts                 # NextAuth 配置
-│   └── prisma.ts               # Prisma Client 单例
+│   ├── auth.ts                  # Auth.js 配置
+│   ├── admin-action-auth.ts     # 后台统一鉴权
+│   ├── admin-session.ts         # 超管 HttpOnly Cookie Session
+│   ├── ip-ban.ts                # IP/CIDR 封禁匹配
+│   └── prisma.ts                # Prisma Client 单例
 └── stores/
-    └── dashboard-store.ts      # Zustand 状态
+    └── dashboard-store.ts       # Zustand 状态
 
 prisma/
 ├── schema.prisma
@@ -181,8 +224,11 @@ prisma/
 
 - `.env`、`.env.production` 和本地数据库文件不会进入 Git。
 - 公开点击接口使用加盐 IP 哈希，不存储原始 IP。
+- IP 封禁支持 CIDR，但后台路径和管理员会话自动白名单，避免误封导致无法解除。
+- 超级管理员账号不开放 Web 注册，只能通过服务器 CLI 创建。
+- 普通管理员写操作会实时查询数据库权限位，避免 JWT 权限更新延迟造成越权。
 - 生产服务模板默认使用低权限用户运行。
-- 如曾经在脚本中暴露过服务器密码或云主机 IP，请立即轮换相关凭据。
+- 如曾经在脚本中暴露过服务器密码、云主机 IP 或密钥，请立即轮换相关凭据。
 
 ## 🧭 开源仓库
 

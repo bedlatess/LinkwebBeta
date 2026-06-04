@@ -3,6 +3,11 @@
 import { requireAdminActionSession } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+function withToast(message: string) {
+  return `/sys-admin/settings?toast=${encodeURIComponent(message)}`;
+}
 
 export async function updateSiteBasics(formData: FormData) {
   await requireAdminActionSession("permManageSiteSettings");
@@ -10,6 +15,7 @@ export async function updateSiteBasics(formData: FormData) {
   const siteTitle = String(formData.get("siteTitle") ?? "").trim();
   const seoDescription = String(formData.get("seoDescription") ?? "").trim();
   const supportEmail = String(formData.get("supportEmail") ?? "").trim();
+  const siteIconUrl = String(formData.get("siteIconUrl") ?? "").trim();
   const announcementText = String(
     formData.get("announcementText") ?? ""
   ).trim();
@@ -29,6 +35,7 @@ export async function updateSiteBasics(formData: FormData) {
       seoDescription:
         seoDescription || "Self-hosted link-in-bio platform",
       supportEmail: supportEmail || null,
+      siteIconUrl: siteIconUrl || null,
       announcementEnabled,
       announcementText: announcementText || null,
       footerText: footerText || "© 2026 PAWN. All rights reserved.",
@@ -39,6 +46,7 @@ export async function updateSiteBasics(formData: FormData) {
       seoDescription:
         seoDescription || "Self-hosted link-in-bio platform",
       supportEmail: supportEmail || null,
+      siteIconUrl: siteIconUrl || null,
       announcementEnabled,
       announcementText: announcementText || null,
       footerText: footerText || "© 2026 PAWN. All rights reserved.",
@@ -49,6 +57,7 @@ export async function updateSiteBasics(formData: FormData) {
   revalidatePath("/sys-admin/settings");
   revalidatePath("/");
   revalidatePath("/auth/signin");
+  redirect(withToast("站点基础设置保存成功"));
 }
 
 export async function toggleRegistrationEnabled() {
@@ -68,6 +77,7 @@ export async function toggleRegistrationEnabled() {
 
   revalidatePath("/sys-admin/settings");
   revalidatePath("/auth/signin");
+  redirect(withToast("注册通道设置已更新"));
 }
 
 export async function toggleOauthEnabled() {
@@ -87,6 +97,7 @@ export async function toggleOauthEnabled() {
 
   revalidatePath("/sys-admin/settings");
   revalidatePath("/auth/signin");
+  redirect(withToast("OAuth 登录设置已更新"));
 }
 
 export async function toggleMaintenanceMode() {
@@ -107,4 +118,5 @@ export async function toggleMaintenanceMode() {
   revalidatePath("/sys-admin/settings");
   revalidatePath("/");
   revalidatePath("/auth/signin");
+  redirect(withToast("维护模式设置已更新"));
 }

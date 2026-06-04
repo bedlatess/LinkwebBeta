@@ -4,6 +4,7 @@ import { requireAdminActionSession } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 function cleanNullable(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
@@ -55,6 +56,9 @@ export async function updateManagedUser(userId: string, formData: FormData) {
 
   revalidatePath(`/sys-admin/users/${userId}/edit`);
   revalidatePath("/sys-admin/users");
+  redirect(
+    `/sys-admin/users/${userId}/edit?toast=${encodeURIComponent("用户资料保存成功")}`
+  );
 }
 
 export async function resetManagedUserPassword(
@@ -78,4 +82,7 @@ export async function resetManagedUserPassword(
   });
 
   revalidatePath(`/sys-admin/users/${userId}/edit`);
+  redirect(
+    `/sys-admin/users/${userId}/edit?toast=${encodeURIComponent("用户密码重置成功")}`
+  );
 }

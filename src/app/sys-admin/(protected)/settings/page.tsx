@@ -20,6 +20,7 @@ import {
   toggleRegistrationEnabled,
   updateSiteBasics,
 } from "./settings-actions";
+import { SiteIconUploader } from "./site-icon-uploader";
 
 function SwitchVisual({ enabled }: { enabled: boolean }) {
   return (
@@ -246,6 +247,11 @@ export default async function AdminSettingsPage() {
                 />
               </div>
             </div>
+
+            <SiteIconUploader
+              initialUrl={settings.siteIconUrl ?? ""}
+              disabled={!canManageSiteSettings}
+            />
 
             <div>
               <label

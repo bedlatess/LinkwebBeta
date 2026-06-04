@@ -162,7 +162,10 @@ export default async function ManagedUserLinksPage({ params }: Props) {
                         <form
                           action={async () => {
                             "use server";
-                            await deleteGlobalLink(link.id);
+                            await deleteGlobalLink(
+                              link.id,
+                              `/sys-admin/users/${user.id}/links`
+                            );
                           }}
                         >
                           <DeleteLinkButton title={link.title || link.url} />

@@ -6,11 +6,15 @@ import {
   Gauge,
   Link2,
   ShieldAlert,
+  ShieldCheck,
   TimerReset,
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { CleanupActionButton } from "./cleanup-action-button";
 import { cleanupEmptyLinks, cleanupExpiredSessions } from "./maintenance-actions";
+import { IpBanDeleteButton } from "./ip-ban-buttons";
+import { deleteIpBanRule, toggleIpBanRule } from "./ip-ban-actions";
+import { IpBanForm } from "./ip-ban-form";
 
 const numberFormatter = new Intl.NumberFormat("zh-CN");
 
@@ -100,7 +104,7 @@ export default async function AdminMaintenancePage() {
 
   const now = new Date();
 
-  const [expiredSessions, emptyLinks, totalSessions, totalLinks, totalVisits] =
+  const [expiredSessions, emptyLinks, totalSessions, totalLinks, totalVisits, ipBanRules] =
     await Promise.all([
       prisma.session.count({ where: { expires: { lt: now } } }),
       prisma.link.count({
@@ -116,6 +120,10 @@ export default async function AdminMaintenancePage() {
       prisma.session.count(),
       prisma.link.count(),
       prisma.visitLog.count(),
+      prisma.ipBanRule.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      }),
     ]);
 
   return (
@@ -180,6 +188,88 @@ export default async function AdminMaintenancePage() {
           action={cleanupEmptyLinks}
           icon={Gauge}
         />
+      </section>
+
+      <section className="rounded-2xl border border-red-400/15 bg-red-500/[0.035] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-red-200/70">
+              IP Ban Rules
+            </p>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight text-red-50">
+              IP 封禁管理
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-red-100/55">
+              支持单 IP 与 CIDR 网段。为避免误封，/sys-admin 后台、超级管理员会话和普通管理员会话自动进入白名单。
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-100/75">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Admin Whitelist Active
+          </div>
+        </div>
+
+        <IpBanForm />
+
+        <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/35">
+          <div className="grid grid-cols-[minmax(0,1fr)_110px_100px_150px] gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-[0.16em] text-white/35">
+            <span>规则</span>
+            <span>来源</span>
+            <span>状态</span>
+            <span className="text-right">操作</span>
+          </div>
+
+          {ipBanRules.length > 0 ? (
+            <div className="divide-y divide-white/8">
+              {ipBanRules.map((rule) => (
+                <div
+                  key={rule.id}
+                  className="grid grid-cols-[minmax(0,1fr)_110px_100px_150px] items-center gap-3 px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-mono text-sm text-white/82">
+                      {rule.value}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-white/35">
+                      {rule.reason ?? "无封禁原因"}
+                    </p>
+                  </div>
+                  <span className="text-xs text-white/45">{rule.source}</span>
+                  <form
+                    action={async () => {
+                      "use server";
+                      await toggleIpBanRule(rule.id);
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      className={`rounded-full border px-2.5 py-1 text-xs ${
+                        rule.isActive
+                          ? "border-red-300/20 bg-red-500/10 text-red-100"
+                          : "border-white/10 bg-white/[0.04] text-white/35"
+                      }`}
+                    >
+                      {rule.isActive ? "启用" : "停用"}
+                    </button>
+                  </form>
+                  <form
+                    className="flex justify-end"
+                    action={async () => {
+                      "use server";
+                      await deleteIpBanRule(rule.id);
+                    }}
+                  >
+                    <IpBanDeleteButton value={rule.value} />
+                  </form>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 py-8 text-center text-sm text-white/40">
+              暂无 IP 封禁规则
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

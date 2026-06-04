@@ -80,6 +80,7 @@ model SiteSettings {
   siteTitle           String   @default("LinkWeb")
   seoDescription      String   @default("Self-hosted link-in-bio platform")
   supportEmail        String?
+  siteIconUrl         String?
   announcementEnabled Boolean  @default(false)
   announcementText    String?
   footerText          String   @default("© 2026 PAWN. All rights reserved.")
@@ -88,6 +89,19 @@ model SiteSettings {
   oauthEnabled        Boolean  @default(true)
   isMaintenanceMode   Boolean  @default(false)
   updatedAt           DateTime @updatedAt
+}
+
+model IpBanRule {
+  id        String   @id @default(cuid())
+  value     String   @unique // single IP or CIDR, e.g. 1.2.3.4 or 1.2.3.0/24
+  reason    String?
+  source    String   @default("manual") // "manual" | "auto"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([source])
 }
 
 model Account {
