@@ -40,7 +40,6 @@ export default async function SignInPage() {
         supportEmail={settings.supportEmail}
         adminContactLabel={settings.adminContactLabel}
         adminContactUrl={settings.adminContactUrl}
-        siteIconUrl={settings.siteIconUrl}
       />
     </Suspense>
   );

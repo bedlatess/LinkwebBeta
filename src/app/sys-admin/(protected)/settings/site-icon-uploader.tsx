@@ -38,7 +38,7 @@ export function SiteIconUploader({
 
         setUrl(data.siteIconUrl);
         router.replace(
-          `/sys-admin/settings?toast=${encodeURIComponent("站点图标上传成功")}`,
+          `/sys-admin/settings?toast=${encodeURIComponent("浏览器标签页图标上传成功")}`,
           { scroll: false }
         );
         router.refresh();
@@ -68,7 +68,7 @@ export function SiteIconUploader({
             htmlFor="siteIconUrl"
             className="mb-1.5 block text-xs font-medium text-white/50"
           >
-            Site Icon URL
+            Favicon URL / 浏览器标签页图标
           </label>
           <input
             id="siteIconUrl"
@@ -86,7 +86,7 @@ export function SiteIconUploader({
           ) : (
             <ImageUp className="h-4 w-4" />
           )}
-          上传图标
+          上传 Favicon
           <input
             ref={inputRef}
             type="file"
@@ -100,7 +100,7 @@ export function SiteIconUploader({
         </label>
       </div>
       <p className="mt-3 text-xs leading-5 text-white/35">
-        支持外链或上传，上传限制 512KB，推荐 512x512 PNG/WEBP。
+        仅影响浏览器标签页、书签和快捷方式图标；不会改变首页或登录页内的品牌 Logo。支持外链或上传，上传限制 512KB，推荐 512x512 PNG/WEBP。
       </p>
       {error && (
         <p className="mt-3 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">

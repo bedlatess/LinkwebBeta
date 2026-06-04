@@ -59,7 +59,6 @@ interface SignInContentProps {
   supportEmail: string | null;
   adminContactLabel: string | null;
   adminContactUrl: string | null;
-  siteIconUrl: string | null;
 }
 
 export function SignInContent({
@@ -71,7 +70,6 @@ export function SignInContent({
   supportEmail,
   adminContactLabel,
   adminContactUrl,
-  siteIconUrl,
 }: SignInContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -198,16 +196,7 @@ export function SignInContent({
               <div className="border-b border-white/10 bg-white/[0.03] px-7 py-6">
                 <div className="flex items-center gap-4">
                   <div className="flex h-13 w-13 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10">
-                    {siteIconUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={siteIconUrl}
-                        alt=""
-                        className="h-full w-full rounded-2xl object-cover"
-                      />
-                    ) : (
-                      <LockKeyhole className="h-6 w-6 text-cyan-100" />
-                    )}
+                    <LockKeyhole className="h-6 w-6 text-cyan-100" />
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/35">

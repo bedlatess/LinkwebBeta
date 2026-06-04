@@ -5,6 +5,8 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 
 const MAX_FILE_SIZE = 512 * 1024;
+export const runtime = "nodejs";
+
 const ALLOWED_TYPES = new Map([
   ["image/png", "png"],
   ["image/jpeg", "jpg"],
