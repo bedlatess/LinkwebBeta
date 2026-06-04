@@ -19,9 +19,6 @@ export default function AdminLoginPage() {
           <h1 className="text-2xl font-semibold tracking-tight">
             LinkWeb System Admin
           </h1>
-          <p className="mt-2 text-sm text-white/45">
-            仅限服务器侧创建的系统管理员登录
-          </p>
         </div>
 
         <Suspense

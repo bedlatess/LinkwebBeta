@@ -9,7 +9,7 @@ export async function deleteGlobalLink(linkId: string) {
 
   const link = await prisma.link.findUnique({
     where: { id: linkId },
-    select: { id: true },
+    select: { id: true, userId: true },
   });
 
   if (!link) {
@@ -21,4 +21,6 @@ export async function deleteGlobalLink(linkId: string) {
   });
 
   revalidatePath("/sys-admin/links");
+  revalidatePath(`/sys-admin/users/${link.userId}/edit`);
+  revalidatePath(`/sys-admin/users/${link.userId}/links`);
 }
