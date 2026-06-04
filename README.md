@@ -185,7 +185,14 @@ Docker Compose 启动示例：
 
 ```bash
 docker compose up -d --build
-docker compose exec -e NPM_CONFIG_CACHE=/tmp/.npm linkweb npx prisma migrate deploy
+```
+
+容器启动时会自动执行 `npx prisma migrate deploy`，随后运行 SQLite 结构保底脚本和演示账号初始化脚本。正常部署不需要在 `docker compose up` 之后再手动执行一次迁移。
+
+如需单独检查迁移状态：
+
+```bash
+docker compose exec -e NPM_CONFIG_CACHE=/tmp/.npm linkweb npx prisma migrate status
 ```
 
 默认映射：

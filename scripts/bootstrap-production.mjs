@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 
-function run(script) {
-  const result = spawnSync("node", [script], {
+function run(command, args) {
+  const result = spawnSync(command, args, {
     stdio: "inherit",
     shell: false,
   });
@@ -14,5 +14,6 @@ function run(script) {
   }
 }
 
-run("scripts/ensure-sqlite-schema.mjs");
-run("scripts/seed-admin.mjs");
+run("npx", ["prisma", "migrate", "deploy"]);
+run("node", ["scripts/ensure-sqlite-schema.mjs"]);
+run("node", ["scripts/seed-admin.mjs"]);
