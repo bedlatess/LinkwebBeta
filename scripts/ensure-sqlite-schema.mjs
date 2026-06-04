@@ -121,6 +121,11 @@ async function main() {
       "id" TEXT NOT NULL PRIMARY KEY DEFAULT 'global',
       "siteTitle" TEXT NOT NULL DEFAULT 'LinkWeb',
       "seoDescription" TEXT NOT NULL DEFAULT 'Self-hosted link-in-bio platform',
+      "supportEmail" TEXT,
+      "announcementEnabled" BOOLEAN NOT NULL DEFAULT false,
+      "announcementText" TEXT,
+      "footerText" TEXT NOT NULL DEFAULT '© 2026 PAWN. All rights reserved.',
+      "githubUrl" TEXT NOT NULL DEFAULT 'https://github.com/bedlatess/LinkwebBeta',
       "registrationEnabled" BOOLEAN NOT NULL DEFAULT true,
       "oauthEnabled" BOOLEAN NOT NULL DEFAULT true,
       "isMaintenanceMode" BOOLEAN NOT NULL DEFAULT false,
@@ -131,6 +136,23 @@ async function main() {
     "SiteSettings",
     "isMaintenanceMode",
     "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn("SiteSettings", "supportEmail", "TEXT");
+  await addColumn(
+    "SiteSettings",
+    "announcementEnabled",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn("SiteSettings", "announcementText", "TEXT");
+  await addColumn(
+    "SiteSettings",
+    "footerText",
+    "TEXT NOT NULL DEFAULT '© 2026 PAWN. All rights reserved.'"
+  );
+  await addColumn(
+    "SiteSettings",
+    "githubUrl",
+    "TEXT NOT NULL DEFAULT 'https://github.com/bedlatess/LinkwebBeta'"
   );
 
   await prisma.$executeRawUnsafe(`

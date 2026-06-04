@@ -43,7 +43,7 @@ function TogglePill({
 }) {
   return (
     <span
-      className={`inline-flex min-w-28 items-center justify-between gap-2 rounded-full border px-2.5 py-1 text-xs transition ${
+      className={`inline-flex h-7 w-24 items-center justify-between gap-2 rounded-full border px-2.5 text-xs transition ${
         enabled
           ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
           : "border-white/10 bg-white/[0.04] text-white/35"
@@ -115,7 +115,15 @@ export default async function AdminUsersPage() {
 
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-2xl shadow-black/20 backdrop-blur-xl">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1080px] border-collapse text-left">
+          <table className="w-full min-w-[1380px] table-fixed border-collapse text-left">
+            <colgroup>
+              <col className="w-[280px]" />
+              <col className="w-[190px]" />
+              <col className="w-[130px]" />
+              <col className="w-[125px]" />
+              <col className="w-[165px]" />
+              <col className="w-[460px]" />
+            </colgroup>
             <thead>
               <tr className="border-b border-white/10 bg-white/[0.035] text-xs uppercase tracking-[0.18em] text-white/38">
                 <th className="px-5 py-4 font-medium">用户</th>
@@ -271,10 +279,11 @@ export default async function AdminUsersPage() {
                     </td>
 
                     <td className="px-5 py-4">
-                      <div className="flex justify-end gap-2">
+                      <div className="grid grid-cols-2 justify-end gap-2 xl:grid-cols-3">
                         {isSuperAdmin && (
                           <>
                             <form
+                              className="w-full"
                               action={async () => {
                                 "use server";
                                 await toggleAdminRole(user.id);
@@ -282,7 +291,7 @@ export default async function AdminUsersPage() {
                             >
                               <button
                                 type="submit"
-                                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+                                className={`inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border px-3 text-sm leading-none transition ${
                                   user.role === "ADMIN"
                                     ? "border-white/10 bg-white/[0.04] text-white/55 hover:bg-white/[0.08]"
                                     : "border-amber-300/20 bg-amber-400/10 text-amber-100 hover:bg-amber-400/15"
@@ -315,12 +324,13 @@ export default async function AdminUsersPage() {
                           <>
                             <Link
                               href={`/sys-admin/users/${user.id}/edit`}
-                              className="inline-flex items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100 transition hover:border-cyan-300/35 hover:bg-cyan-400/15"
+                              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-400/10 px-3 text-sm leading-none text-cyan-100 transition hover:border-cyan-300/35 hover:bg-cyan-400/15"
                             >
                               <Edit3 className="h-4 w-4" />
                               代管
                             </Link>
                             <form
+                              className="w-full"
                               action={async () => {
                                 "use server";
                                 await toggleUserBan(user.id);
@@ -328,7 +338,7 @@ export default async function AdminUsersPage() {
                             >
                               <button
                                 type="submit"
-                                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+                                className={`inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border px-3 text-sm leading-none transition ${
                                   user.isBanned
                                     ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/15"
                                     : "border-red-400/20 bg-red-500/10 text-red-200 hover:bg-red-500/15"
@@ -342,6 +352,7 @@ export default async function AdminUsersPage() {
                         )}
                         {actor.permissions.permDeleteUsers && (
                           <form
+                            className="w-full"
                             action={async () => {
                               "use server";
                               await deleteUser(user.id);

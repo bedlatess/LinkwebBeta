@@ -44,12 +44,18 @@ interface SignInContentProps {
   };
   turnstileSiteKey: string;
   registrationEnabled: boolean;
+  siteTitle: string;
+  seoDescription: string;
+  supportEmail: string | null;
 }
 
 export function SignInContent({
   oauthProviders,
   turnstileSiteKey,
   registrationEnabled,
+  siteTitle,
+  seoDescription,
+  supportEmail,
 }: SignInContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -143,9 +149,11 @@ export function SignInContent({
                 <Link2 className="h-7 w-7 text-white" />
               </div>
               <h1 className="text-2xl font-bold tracking-tight text-white">
-                LinkWeb
+                {siteTitle}
               </h1>
-              <p className="mt-1.5 text-sm text-white/50">登录到管理后台</p>
+              <p className="mx-auto mt-1.5 max-w-xs text-sm leading-6 text-white/50">
+                {seoDescription}
+              </p>
             </div>
 
             {/* ─── OAuth Buttons ─── */}
@@ -291,7 +299,9 @@ export function SignInContent({
 
             {/* ─── Footer hint ─── */}
             <p className="mt-4 text-center text-xs text-white/20">
-              测试账号：admin@linkweb.local / admin123
+              {supportEmail
+                ? `需要帮助？联系 ${supportEmail}`
+                : "测试账号：admin@linkweb.local / admin123"}
             </p>
           </div>
         )}

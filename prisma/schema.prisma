@@ -69,6 +69,11 @@ model SiteSettings {
   id                  String   @id @default("global")
   siteTitle           String   @default("LinkWeb")
   seoDescription      String   @default("Self-hosted link-in-bio platform")
+  supportEmail        String?
+  announcementEnabled Boolean  @default(false)
+  announcementText    String?
+  footerText          String   @default("© 2026 PAWN. All rights reserved.")
+  githubUrl           String   @default("https://github.com/bedlatess/LinkwebBeta")
   registrationEnabled Boolean  @default(true)
   oauthEnabled        Boolean  @default(true)
   isMaintenanceMode   Boolean  @default(false)

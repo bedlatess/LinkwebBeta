@@ -104,7 +104,7 @@ export function AdminPermissionsModal({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-xl border border-amber-300/20 bg-amber-400/10 px-3 py-2 text-sm text-amber-100 transition hover:border-amber-300/35 hover:bg-amber-400/15"
+        className="inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-amber-300/20 bg-amber-400/10 px-3 text-sm leading-none text-amber-100 transition hover:border-amber-300/35 hover:bg-amber-400/15"
       >
         <SlidersHorizontal className="h-4 w-4" />
         编辑权限
@@ -119,8 +119,8 @@ export function AdminPermissionsModal({
             onClick={resetAndClose}
           />
 
-          <section className="relative z-10 w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/50">
-            <div className="border-b border-white/10 bg-white/[0.035] px-6 py-5">
+          <section className="relative z-10 flex max-h-[calc(100vh-3rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/50">
+            <div className="shrink-0 border-b border-white/10 bg-white/[0.035] px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-200/70">
@@ -143,7 +143,7 @@ export function AdminPermissionsModal({
               </div>
             </div>
 
-            <div className="space-y-3 p-6">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-6">
               {permissionOptions.map((item) => {
                 const enabled = permissions[item.field];
 
@@ -208,7 +208,7 @@ export function AdminPermissionsModal({
               })}
             </div>
 
-            <div className="flex flex-col-reverse gap-3 border-t border-white/10 bg-white/[0.025] px-6 py-5 sm:flex-row sm:justify-end">
+            <div className="shrink-0 flex flex-col-reverse gap-3 border-t border-white/10 bg-white/[0.025] px-6 py-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={resetAndClose}

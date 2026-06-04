@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getGlobalSiteSettings } from "@/lib/site-settings";
 import {
   ArrowRight,
   BarChart3,
@@ -12,7 +13,7 @@ import {
   Terminal,
 } from "lucide-react";
 
-const GITHUB_URL = "https://github.com/bedlatess/LinkwebBeta";
+export const dynamic = "force-dynamic";
 
 function GitHubMark({ className }: { className?: string }) {
   return (
@@ -60,7 +61,15 @@ const features = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await getGlobalSiteSettings();
+  const githubUrl =
+    settings.githubUrl || "https://github.com/bedlatess/LinkwebBeta";
+  const announcement =
+    settings.announcementEnabled && settings.announcementText
+      ? settings.announcementText
+      : null;
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#06070a] text-white">
       <section className="relative min-h-screen px-5 py-6 sm:px-8">
@@ -79,7 +88,7 @@ export default function HomePage() {
             </Link>
 
             <a
-              href={GITHUB_URL}
+              href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-white/60 transition-colors hover:border-white/25 hover:text-white sm:inline-flex"
@@ -96,16 +105,21 @@ export default function HomePage() {
                 self-hosted link-in-bio control plane
               </div>
 
+              {announcement && (
+                <div className="mb-5 max-w-2xl rounded-xl border border-amber-300/25 bg-amber-300/[0.08] px-4 py-3 text-sm leading-6 text-amber-100/85">
+                  {announcement}
+                </div>
+              )}
+
               <h1 className="max-w-6xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl md:text-6xl md:leading-[1.08] lg:text-6xl xl:text-7xl xl:leading-[1.05]">
-                <span className="block">LinkWeb：自托管</span>
+                <span className="block">{settings.siteTitle}：自托管</span>
                 <span className="mt-2 block md:mt-3">
                   数据自主的个人链接聚合中心
                 </span>
               </h1>
 
               <p className="mt-6 max-w-2xl text-base leading-8 text-white/58 sm:text-lg">
-                把主页链接、主题皮肤、点击分析、赞助入口和自定义域名收进一个你能完全掌控的开源系统。
-                不租借流量入口，不交出数据主权。
+                {settings.seoDescription}
               </p>
 
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -197,9 +211,9 @@ export default function HomePage() {
           </section>
 
           <footer className="flex flex-col gap-3 border-t border-white/10 py-6 text-xs text-white/35 sm:flex-row sm:items-center sm:justify-between">
-            <span>© 2026 PAWN. All rights reserved.</span>
+            <span>{settings.footerText}</span>
             <a
-              href={GITHUB_URL}
+              href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-white/55 transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-300/30 hover:bg-teal-300/[0.08] hover:text-white"

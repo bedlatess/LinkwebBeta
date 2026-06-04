@@ -9,6 +9,13 @@ export async function updateSiteBasics(formData: FormData) {
 
   const siteTitle = String(formData.get("siteTitle") ?? "").trim();
   const seoDescription = String(formData.get("seoDescription") ?? "").trim();
+  const supportEmail = String(formData.get("supportEmail") ?? "").trim();
+  const announcementText = String(
+    formData.get("announcementText") ?? ""
+  ).trim();
+  const footerText = String(formData.get("footerText") ?? "").trim();
+  const githubUrl = String(formData.get("githubUrl") ?? "").trim();
+  const announcementEnabled = formData.get("announcementEnabled") === "on";
 
   if (!siteTitle) {
     throw new Error("Site Title is required");
@@ -21,15 +28,26 @@ export async function updateSiteBasics(formData: FormData) {
       siteTitle,
       seoDescription:
         seoDescription || "Self-hosted link-in-bio platform",
+      supportEmail: supportEmail || null,
+      announcementEnabled,
+      announcementText: announcementText || null,
+      footerText: footerText || "© 2026 PAWN. All rights reserved.",
+      githubUrl: githubUrl || "https://github.com/bedlatess/LinkwebBeta",
     },
     update: {
       siteTitle,
       seoDescription:
         seoDescription || "Self-hosted link-in-bio platform",
+      supportEmail: supportEmail || null,
+      announcementEnabled,
+      announcementText: announcementText || null,
+      footerText: footerText || "© 2026 PAWN. All rights reserved.",
+      githubUrl: githubUrl || "https://github.com/bedlatess/LinkwebBeta",
     },
   });
 
   revalidatePath("/sys-admin/settings");
+  revalidatePath("/");
   revalidatePath("/auth/signin");
 }
 

@@ -35,6 +35,9 @@ export default async function SignInPage() {
         oauthProviders={oauthProviders}
         turnstileSiteKey={turnstileSiteKey}
         registrationEnabled={settings.registrationEnabled}
+        siteTitle={settings.siteTitle}
+        seoDescription={settings.seoDescription}
+        supportEmail={settings.supportEmail}
       />
     </Suspense>
   );

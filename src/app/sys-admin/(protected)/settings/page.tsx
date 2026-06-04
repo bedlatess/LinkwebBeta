@@ -2,11 +2,15 @@ import { getAdminActor } from "@/lib/admin-action-auth";
 import { getGlobalSiteSettings } from "@/lib/site-settings";
 import {
   AlertTriangle,
+  Bell,
+  GitBranch,
   Globe2,
   LockKeyhole,
+  Mail,
   Save,
   Search,
   ShieldCheck,
+  Type,
   UserPlus,
 } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -32,6 +36,21 @@ function SwitchVisual({ enabled }: { enabled: boolean }) {
         }`}
       />
     </span>
+  );
+}
+
+function FieldImpact({
+  label,
+  effect,
+}: {
+  label: string;
+  effect: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <p className="text-sm font-semibold text-white/80">{label}</p>
+      <p className="mt-2 text-sm leading-6 text-white/42">{effect}</p>
+    </div>
   );
 }
 
@@ -119,7 +138,7 @@ export default async function AdminSettingsPage() {
               全局站点配置
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
-              管理站点基础 SEO 信息，并用 Feature Flags 控制注册与社交登录入口。
+              管理站点基础 SEO、公开展示文案、支持入口，并用 Feature Flags 控制注册与社交登录入口。
             </p>
           </div>
           <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs text-white/55">
@@ -142,7 +161,7 @@ export default async function AdminSettingsPage() {
                 基础信息
               </h2>
               <p className="text-sm text-white/38">
-                用于默认页面标题与搜索摘要。
+                用于首页、登录页、SEO 与公开提示。
               </p>
             </div>
           </div>
@@ -182,6 +201,91 @@ export default async function AdminSettingsPage() {
               />
             </div>
 
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="supportEmail"
+                  className="mb-1.5 flex items-center gap-2 text-xs font-medium text-white/50"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  Support Email
+                </label>
+                <input
+                  id="supportEmail"
+                  name="supportEmail"
+                  type="email"
+                  defaultValue={settings.supportEmail ?? ""}
+                  placeholder="support@example.com"
+                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/10"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="githubUrl"
+                  className="mb-1.5 flex items-center gap-2 text-xs font-medium text-white/50"
+                >
+                  <GitBranch className="h-3.5 w-3.5" />
+                  GitHub Repository
+                </label>
+                <input
+                  id="githubUrl"
+                  name="githubUrl"
+                  defaultValue={settings.githubUrl}
+                  placeholder="https://github.com/..."
+                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/10"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="footerText"
+                className="mb-1.5 flex items-center gap-2 text-xs font-medium text-white/50"
+              >
+                <Type className="h-3.5 w-3.5" />
+                Footer Copyright
+              </label>
+              <input
+                id="footerText"
+                name="footerText"
+                defaultValue={settings.footerText}
+                className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-cyan-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-cyan-400/10"
+              />
+            </div>
+
+            <div className="rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.035] p-4">
+              <label className="flex items-center justify-between gap-4">
+                <span className="flex min-w-0 items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-300/20 bg-emerald-400/12 text-emerald-200">
+                    <Bell className="h-4 w-4" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold text-white/82">
+                      首页公告条
+                    </span>
+                    <span className="mt-1 block text-sm leading-6 text-white/42">
+                      开启后会显示在产品首页主视觉上方，适合发布维护通知、版本更新或邀请信息。
+                    </span>
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  name="announcementEnabled"
+                  defaultChecked={settings.announcementEnabled}
+                  className="h-4 w-4 shrink-0 accent-emerald-300"
+                />
+              </label>
+              <textarea
+                id="announcementText"
+                name="announcementText"
+                defaultValue={settings.announcementText ?? ""}
+                rows={3}
+                placeholder="例如：LinkWeb Beta 正在开放邀请测试。"
+                className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/20 focus:border-emerald-300/45 focus:ring-2 focus:ring-emerald-300/10"
+              />
+            </div>
+
             <button
               type="submit"
               className="inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-200"
@@ -215,6 +319,43 @@ export default async function AdminSettingsPage() {
             enabled={settings.oauthEnabled}
             action={toggleOauthEnabled}
             icon={LockKeyhole}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <div className="mb-5">
+          <p className="text-xs font-medium uppercase tracking-[0.24em] text-cyan-300/70">
+            Where It Works
+          </p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">
+            这些配置会在哪里生效
+          </h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <FieldImpact
+            label="Site Title"
+            effect="影响首页品牌标题、登录页品牌标题，以及默认 SEO 标题。"
+          />
+          <FieldImpact
+            label="SEO Description"
+            effect="影响首页副标题和搜索引擎摘要，适合写平台定位。"
+          />
+          <FieldImpact
+            label="Support Email"
+            effect="显示在登录页底部，给用户一个明确的管理员联系入口。"
+          />
+          <FieldImpact
+            label="首页公告条"
+            effect="开启后展示在首页 CTA 上方，可用于维护通知、Beta 邀请、版本公告。"
+          />
+          <FieldImpact
+            label="GitHub Repository"
+            effect="替换首页右上角和页脚的项目仓库链接。"
+          />
+          <FieldImpact
+            label="Footer Copyright"
+            effect="替换首页底部版权文字，适合品牌化部署。"
           />
         </div>
       </section>

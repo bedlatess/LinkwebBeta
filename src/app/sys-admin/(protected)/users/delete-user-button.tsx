@@ -19,7 +19,7 @@ export function DeleteUserButton({ label }: DeleteUserButtonProps) {
           event.preventDefault();
         }
       }}
-      className="inline-flex items-center gap-2 rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-sm text-red-200 transition hover:border-red-300/40 hover:bg-red-500/20 hover:text-red-100"
+      className="inline-flex h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-red-400/25 bg-red-500/10 px-3 text-sm leading-none text-red-200 transition hover:border-red-300/40 hover:bg-red-500/20 hover:text-red-100"
     >
       <Trash2 className="h-4 w-4" />
       删除
