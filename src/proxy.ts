@@ -31,11 +31,13 @@ export default auth(async (req) => {
   const mainHost = process.env.NEXTAUTH_URL
     ? new URL(process.env.NEXTAUTH_URL).host
     : "localhost:2222";
+  const isSysAdminRoute =
+    pathname === "/sys-admin" || pathname.startsWith("/sys-admin/");
 
   // ═══════════════════════════════════════════════════════════════
   //  Admin Guard (independent from regular Auth.js sessions)
   // ═══════════════════════════════════════════════════════════════
-  if (pathname.startsWith("/sys-admin")) {
+  if (isSysAdminRoute) {
     const isAdminPublicRoute =
       pathname === "/sys-admin/login" ||
       pathname.startsWith("/sys-admin/api/login");
@@ -67,7 +69,7 @@ export default auth(async (req) => {
     pathname.startsWith("/robots.txt") ||
     pathname.startsWith("/sitemap.xml");
 
-  if (!isMaintenancePage && !isNextAsset) {
+  if (!isSysAdminRoute && !isMaintenancePage && !isNextAsset) {
     try {
       const settings = await getPrisma().siteSettings.findUnique({
         where: { id: "global" },
