@@ -24,14 +24,17 @@ export default async function LinksPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+      <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/70">
+          Creator Console
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
           链接管理
         </h1>
-        <p className="mt-1 text-sm text-white/50">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
           添加、编辑、排序你的链接，右侧实时预览最终效果
         </p>
-      </div>
+      </section>
 
       <LinksClient initialLinks={links} />
     </div>

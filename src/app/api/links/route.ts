@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { isValidLinkIcon } from "@/lib/link-icons";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -40,6 +41,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!isValidLinkIcon(iconName)) {
+    return NextResponse.json(
+      { error: "Unsupported icon name" },
+      { status: 400 }
+    );
+  }
+
   // Auto-assign sortOrder: max(sortOrder) + 1
   const lastLink = await prisma.link.findFirst({
     where: { userId: session.user.id },
@@ -53,7 +61,7 @@ export async function POST(request: Request) {
       userId: session.user.id,
       title,
       url,
-      iconName: iconName ?? null,
+      iconName: iconName || null,
       isVisible: isVisible ?? true,
       sortOrder,
       groupName: groupName ?? null,

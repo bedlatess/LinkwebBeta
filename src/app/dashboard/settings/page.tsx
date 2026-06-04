@@ -21,18 +21,22 @@ export default async function SettingsPage() {
       name: true,
       email: true,
       username: true,
+      image: true,
       customDomain: true,
     },
   });
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+      <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/70">
+          Account Center
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
           账号中心
         </h1>
-        <p className="mt-1 text-sm text-white/50">
-          管理你的账户信息、自定义域名和安全设置
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
+          管理头像、公开主页入口、自定义域名和账号基础信息。
         </p>
       </div>
 
@@ -40,6 +44,7 @@ export default async function SettingsPage() {
         userName={user?.name ?? "未设置"}
         userEmail={user?.email ?? ""}
         username={user?.username ?? ""}
+        initialImage={user?.image ?? null}
         initialDomain={user?.customDomain ?? null}
       />
     </div>

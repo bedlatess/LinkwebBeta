@@ -13,6 +13,10 @@ import { prisma } from "@/lib/prisma";
 const DOMAIN_REGEX =
   /^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
 
+function normalizeHost(host: string) {
+  return host.trim().toLowerCase().replace(/:\d+$/, "");
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -46,10 +50,21 @@ export async function PUT(request: Request) {
   }
 
   // ─── Validate format ───
-  const cleanDomain = domain.trim().toLowerCase();
+  const cleanDomain = normalizeHost(domain);
   if (!DOMAIN_REGEX.test(cleanDomain)) {
     return NextResponse.json(
       { error: "域名格式不正确，请输入如 link.example.com 的格式（不含协议）" },
+      { status: 400 }
+    );
+  }
+
+  const mainHost = process.env.NEXTAUTH_URL
+    ? normalizeHost(new URL(process.env.NEXTAUTH_URL).host)
+    : "";
+
+  if (mainHost && cleanDomain === mainHost) {
+    return NextResponse.json(
+      { error: "不能绑定平台主域名，请使用你的专属子域名" },
       { status: 400 }
     );
   }

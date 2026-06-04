@@ -28,10 +28,11 @@ const getPrisma = (() => {
 export default auth(async (req) => {
   const isAuthenticated = !!req.auth;
   const { pathname } = req.nextUrl;
-  const host = req.headers.get("host") ?? "";
+  const rawHost = req.headers.get("host") ?? "";
+  const host = rawHost.toLowerCase().replace(/:\d+$/, "");
   const mainHost = process.env.NEXTAUTH_URL
-    ? new URL(process.env.NEXTAUTH_URL).host
-    : "localhost:2222";
+    ? new URL(process.env.NEXTAUTH_URL).host.toLowerCase().replace(/:\d+$/, "")
+    : "localhost";
   const isSysAdminRoute =
     pathname === "/sys-admin" || pathname.startsWith("/sys-admin/");
   const adminSession = await verifyAdminSessionFromRequest(req);
@@ -143,28 +144,8 @@ export default auth(async (req) => {
   // ═══════════════════════════════════════════════════════════════
   //  Custom Domain Rewrite (White-label)
   // ═══════════════════════════════════════════════════════════════
-  if (host !== mainHost && !host.startsWith("localhost")) {
-    // Only rewrite the root path for custom domains (not /api, /auth, etc.)
+  if (host !== mainHost && host !== "localhost" && !host.endsWith(".localhost")) {
     if (pathname === "/" || pathname === "") {
-      try {
-        const prisma = getPrisma();
-        const user = await prisma.user.findUnique({
-          where: { customDomain: host },
-          select: { username: true },
-        });
-
-        if (user?.username) {
-          // Rewrite: serve the user's public page at the custom domain root
-          const rewriteUrl = new URL(`/${user.username}`, req.url);
-          return NextResponse.rewrite(rewriteUrl);
-        }
-      } catch {
-        // DB lookup failed — fall through to normal routing
-      }
-    }
-    // For non-root paths on custom domains, also try to rewrite
-    // (e.g. customdomain.com → /username)
-    if (pathname === "/") {
       try {
         const prisma = getPrisma();
         const user = await prisma.user.findUnique({
@@ -175,7 +156,7 @@ export default auth(async (req) => {
           return NextResponse.rewrite(new URL(`/${user.username}`, req.url));
         }
       } catch {
-        // fall through
+        // DB lookup failed — fall through to normal routing
       }
     }
   }

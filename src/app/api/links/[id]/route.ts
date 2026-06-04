@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { isValidLinkIcon } from "@/lib/link-icons";
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
@@ -32,7 +33,15 @@ export async function PATCH(
   const allowedFields: Record<string, unknown> = {};
   if (body.title !== undefined) allowedFields.title = body.title;
   if (body.url !== undefined) allowedFields.url = body.url;
-  if (body.iconName !== undefined) allowedFields.iconName = body.iconName;
+  if (body.iconName !== undefined) {
+    if (!isValidLinkIcon(body.iconName)) {
+      return NextResponse.json(
+        { error: "Unsupported icon name" },
+        { status: 400 }
+      );
+    }
+    allowedFields.iconName = body.iconName || null;
+  }
   if (body.isVisible !== undefined) allowedFields.isVisible = body.isVisible;
   if (body.groupName !== undefined) allowedFields.groupName = body.groupName;
 

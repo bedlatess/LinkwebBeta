@@ -9,6 +9,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useDashboardStore } from "@/stores/dashboard-store";
+import { LINK_ICON_OPTIONS } from "@/lib/link-icons";
 import { X, Loader2, Check } from "lucide-react";
 
 interface Props {
@@ -157,19 +158,25 @@ export function LinkEditor({ mode, onClose }: Props) {
           />
         </div>
 
-        {/* Icon Name */}
+        {/* Icon */}
         <div>
           <label className="mb-1 block text-xs font-medium text-white/40">
-            图标名称{" "}
-            <span className="text-white/20">(Lucide 图标，可选)</span>
+            图标
+            <span className="ml-2 text-white/20">
+              内置主流社交、直播、短视频和内容平台
+            </span>
           </label>
-          <input
-            type="text"
+          <select
             value={iconName}
             onChange={(e) => setIconName(e.target.value)}
-            placeholder="例如：github, twitter, youtube"
-            className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-white/15 backdrop-blur-sm transition-all focus:border-indigo-500/40 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-indigo-500/15"
-          />
+            className="w-full rounded-lg border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white backdrop-blur-sm transition-all focus:border-cyan-300/40 focus:bg-slate-950/85 focus:outline-none focus:ring-2 focus:ring-cyan-300/15"
+          >
+            {LINK_ICON_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Visibility toggle */}

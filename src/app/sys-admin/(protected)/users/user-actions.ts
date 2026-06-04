@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  getAdminActor,
   requireAdminActionSession,
   requireSuperAdminActionSession,
   type AdminPermissionField,
@@ -57,8 +58,30 @@ const ADMIN_PERMISSION_FIELDS = [
 type UserPermissionField = (typeof USER_PERMISSION_FIELDS)[number];
 export type AdminPermissionInput = Record<AdminPermissionField, boolean>;
 
+async function assertCanMutateTargetUser(userId: string) {
+  const actor = await getAdminActor();
+
+  if (!actor) {
+    throw new Error("Forbidden: Admin session required");
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  if (!target) {
+    throw new Error("User not found");
+  }
+
+  if (actor.type !== "SUPER_ADMIN" && target.role === "ADMIN") {
+    throw new Error("普通管理员不能修改其他管理员账号");
+  }
+}
+
 export async function toggleUserBan(userId: string) {
   await requireAdminActionSession("permBanUsers");
+  await assertCanMutateTargetUser(userId);
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -140,6 +163,7 @@ export async function createManagedUser(formData: FormData) {
 
 export async function deleteUser(userId: string) {
   await requireAdminActionSession("permDeleteUsers");
+  await assertCanMutateTargetUser(userId);
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -163,6 +187,7 @@ export async function toggleUserPermission(
   field: UserPermissionField
 ) {
   await requireAdminActionSession("permManageUserEntitlements");
+  await assertCanMutateTargetUser(userId);
 
   if (!USER_PERMISSION_FIELDS.includes(field)) {
     throw new Error("Invalid permission field");

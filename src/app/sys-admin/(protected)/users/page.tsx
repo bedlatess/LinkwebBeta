@@ -190,6 +190,8 @@ export default async function AdminUsersPage() {
               : user.username
               ? `${origin}/${user.username}`
               : null;
+            const canMutateThisUser =
+              actor.type === "SUPER_ADMIN" || user.role !== "ADMIN";
 
             return (
               <article
@@ -285,7 +287,8 @@ export default async function AdminUsersPage() {
                     </div>
 
                     <div className="mt-5 flex flex-wrap gap-2">
-                      {actor.permissions.permManageUserEntitlements ? (
+                      {actor.permissions.permManageUserEntitlements &&
+                      canMutateThisUser ? (
                         <>
                           <CapabilityToggle
                             userId={user.id}
@@ -384,7 +387,7 @@ export default async function AdminUsersPage() {
                         </>
                       )}
 
-                      {actor.permissions.permEditUsers && (
+                      {actor.permissions.permEditUsers && canMutateThisUser && (
                         <Link
                           href={`/sys-admin/users/${user.id}/edit`}
                           className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-400/10 px-3 text-sm leading-none text-cyan-100 transition hover:border-cyan-300/35 hover:bg-cyan-400/15"
@@ -404,7 +407,7 @@ export default async function AdminUsersPage() {
                         </Link>
                       )}
 
-                      {actor.permissions.permBanUsers && (
+                      {actor.permissions.permBanUsers && canMutateThisUser && (
                         <form
                           action={async () => {
                             "use server";
@@ -425,7 +428,7 @@ export default async function AdminUsersPage() {
                         </form>
                       )}
 
-                      {actor.permissions.permDeleteUsers && (
+                      {actor.permissions.permDeleteUsers && canMutateThisUser && (
                         <form
                           action={async () => {
                             "use server";

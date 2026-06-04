@@ -8,37 +8,9 @@
  */
 
 import { useDashboardStore } from "@/stores/dashboard-store";
+import { getLinkIconOption } from "@/lib/link-icons";
 import { ExternalLink, Smartphone } from "lucide-react";
 import { useMemo } from "react";
-
-// Simple icon map for common icon names
-const COMMON_ICONS: Record<string, string> = {
-  github: "🐙",
-  twitter: "🐦",
-  youtube: "▶️",
-  twitch: "🎮",
-  discord: "💬",
-  instagram: "📷",
-  linkedin: "💼",
-  facebook: "👤",
-  tiktok: "🎵",
-  email: "✉️",
-  website: "🌐",
-  blog: "📝",
-  music: "🎶",
-  video: "🎬",
-  shop: "🛒",
-  donate: "💝",
-  calendar: "📅",
-  docs: "📄",
-  newsletter: "📬",
-};
-
-function getIconDisplay(iconName: string | null): string {
-  if (!iconName) return "🔗";
-  const key = iconName.toLowerCase();
-  return COMMON_ICONS[key] ?? "🔗";
-}
 
 export function PhonePreview() {
   const { links, theme } = useDashboardStore();
@@ -103,20 +75,22 @@ export function PhonePreview() {
               </div>
             )}
 
-            {visibleLinks.map((link) => (
-              <div
-                key={link.id}
-                className={`flex items-center gap-3 border border-white/[0.08] bg-white/[0.06] px-4 py-3 backdrop-blur-sm transition-all duration-200 hover:bg-white/[0.1] ${buttonRadiusClass}`}
-              >
-                <span className="flex-shrink-0 text-base">
-                  {getIconDisplay(link.iconName)}
-                </span>
-                <span className="flex-1 truncate text-sm font-medium text-white/90">
-                  {link.title}
-                </span>
-                <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-white/30" />
-              </div>
-            ))}
+            {visibleLinks.map((link) => {
+              const Icon = getLinkIconOption(link.iconName).icon;
+
+              return (
+                <div
+                  key={link.id}
+                  className={`flex items-center gap-3 border border-white/[0.08] bg-white/[0.06] px-4 py-3 backdrop-blur-sm transition-all duration-200 hover:bg-white/[0.1] ${buttonRadiusClass}`}
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0 text-white/75" />
+                  <span className="flex-1 truncate text-sm font-medium text-white/90">
+                    {link.title}
+                  </span>
+                  <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-white/30" />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@
  *   - Footer with "Powered by LinkWeb"
  */
 
+import { getLinkIconOption } from "@/lib/link-icons";
 import { ExternalLink, Globe, Coffee, X, Copy, Check, Heart } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useState } from "react";
@@ -44,48 +45,6 @@ interface Props {
   avatarUrl: string | null;
   links: LinkData[];
   theme: ThemeData;
-}
-
-const ICON_MAP: Record<string, string> = {
-  github: "🐙",
-  twitter: "🐦",
-  youtube: "▶️",
-  twitch: "🎮",
-  discord: "💬",
-  instagram: "📷",
-  linkedin: "💼",
-  facebook: "👤",
-  tiktok: "🎵",
-  email: "✉️",
-  website: "🌐",
-  blog: "📝",
-  music: "🎶",
-  video: "🎬",
-  shop: "🛒",
-  donate: "💝",
-  calendar: "📅",
-  docs: "📄",
-  newsletter: "📬",
-  telegram: "✈️",
-  mastodon: "🐘",
-  threads: "🧵",
-  snapchat: "👻",
-  reddit: "🤖",
-  medium: "📖",
-  substack: "📰",
-  spotify: "🎧",
-  soundcloud: "☁️",
-  dribbble: "🏀",
-  behance: "🎨",
-  codepen: "✒️",
-  dev: "💻",
-  hashnode: "🏷️",
-  rss: "📡",
-};
-
-function getIcon(iconName: string | null): string {
-  if (!iconName) return "🔗";
-  return ICON_MAP[iconName.toLowerCase()] ?? "🔗";
 }
 
 export function PublicLinkPage({
@@ -203,8 +162,7 @@ export function PublicLinkPage({
           )}
         </div>
 
-        <h1 className={`text-xl font-bold ${textColor}`}>{displayName}</h1>
-        <p className={`mt-1 text-sm ${textMuted}`}>@{username}</p>
+        <h1 className={`text-xl font-bold ${textColor}`}>@{username}</h1>
 
         {bio && (
           <p
@@ -227,37 +185,43 @@ export function PublicLinkPage({
 
         {/* Links */}
         <div className="mt-8 w-full space-y-3">
-          {links.map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackClick(link.id)}
-              className={`flex items-center gap-3 border px-5 py-3.5 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 ${cardBg} ${cardHover} ${buttonRadiusClass} ${
-                hasBlur ? "backdrop-blur-md" : ""
-              }`}
-              style={
-                hasBlur
-                  ? { backdropFilter: `blur(${theme.bgBlur}px)` }
-                  : undefined
-              }
-            >
-              <span className="flex-shrink-0 text-lg">
-                {getIcon(link.iconName)}
-              </span>
-              <span
-                className={`flex-1 truncate text-sm font-medium ${textColor}`}
-              >
-                {link.title}
-              </span>
-              <ExternalLink
-                className={`h-4 w-4 flex-shrink-0 ${
-                  isDarkBg ? "text-white/25" : "text-slate-400"
+          {links.map((link) => {
+            const Icon = getLinkIconOption(link.iconName).icon;
+
+            return (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackClick(link.id)}
+                className={`flex items-center gap-3 border px-5 py-3.5 shadow-lg shadow-black/10 transition-all duration-200 hover:-translate-y-0.5 ${cardBg} ${cardHover} ${buttonRadiusClass} ${
+                  hasBlur ? "backdrop-blur-md" : ""
                 }`}
-              />
-            </a>
-          ))}
+                style={
+                  hasBlur
+                    ? { backdropFilter: `blur(${theme.bgBlur}px)` }
+                    : undefined
+                }
+              >
+                <Icon
+                  className={`h-4 w-4 flex-shrink-0 ${
+                    isDarkBg ? "text-white/70" : "text-slate-600"
+                  }`}
+                />
+                <span
+                  className={`flex-1 truncate text-sm font-medium ${textColor}`}
+                >
+                  {link.title}
+                </span>
+                <ExternalLink
+                  className={`h-4 w-4 flex-shrink-0 ${
+                    isDarkBg ? "text-white/25" : "text-slate-400"
+                  }`}
+                />
+              </a>
+            );
+          })}
         </div>
 
         {links.length === 0 && (

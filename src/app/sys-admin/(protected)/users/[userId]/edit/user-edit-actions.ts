@@ -1,6 +1,9 @@
 "use server";
 
-import { requireAdminActionSession } from "@/lib/admin-action-auth";
+import {
+  getAdminActor,
+  requireAdminActionSession,
+} from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -11,8 +14,30 @@ function cleanNullable(value: FormDataEntryValue | null) {
   return text.length > 0 ? text : null;
 }
 
+async function assertCanMutateTargetUser(userId: string) {
+  const actor = await getAdminActor();
+
+  if (!actor) {
+    throw new Error("Forbidden: Admin session required");
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  if (!target) {
+    throw new Error("User not found");
+  }
+
+  if (actor.type !== "SUPER_ADMIN" && target.role === "ADMIN") {
+    throw new Error("普通管理员不能修改其他管理员账号");
+  }
+}
+
 export async function updateManagedUser(userId: string, formData: FormData) {
   await requireAdminActionSession("permEditUsers");
+  await assertCanMutateTargetUser(userId);
 
   const name = cleanNullable(formData.get("name"));
   const bio = cleanNullable(formData.get("bio"));
@@ -66,6 +91,7 @@ export async function resetManagedUserPassword(
   formData: FormData
 ) {
   await requireAdminActionSession("permResetUserPasswords");
+  await assertCanMutateTargetUser(userId);
 
   const password = String(formData.get("password") ?? "");
 

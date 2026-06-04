@@ -17,14 +17,17 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+      <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-200/70">
+          Traffic Intelligence
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
           数据分析
         </h1>
-        <p className="mt-1 text-sm text-white/50">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
           过去 7 天的链接访问数据概览
         </p>
-      </div>
+      </section>
 
       <AnalyticsClient />
     </div>

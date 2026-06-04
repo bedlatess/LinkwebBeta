@@ -21,14 +21,17 @@ export default async function AppearancePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+      <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-200/70">
+          Visual System
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
           外观设置
         </h1>
-        <p className="mt-1 text-sm text-white/50">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-white/50">
           选择预设主题或自定义你的 LinkWeb 页面外观
         </p>
-      </div>
+      </section>
 
       <AppearanceClient
         initialConfig={

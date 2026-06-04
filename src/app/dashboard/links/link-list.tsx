@@ -36,6 +36,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { LinkItem } from "@/stores/dashboard-store";
+import { getLinkIconOption } from "@/lib/link-icons";
 
 export function LinkList() {
   const {
@@ -233,9 +234,11 @@ function SortableLinkItem({
           <span className="truncate text-sm font-medium text-white/80">
             {link.title}
           </span>
-          <span className="flex-shrink-0 text-[11px] text-white/25">
-            {link.iconName && `[${link.iconName}]`}
-          </span>
+          {link.iconName && (
+            <span className="flex-shrink-0 text-[11px] text-white/25">
+              {getLinkIconOption(link.iconName).label}
+            </span>
+          )}
         </div>
         <p className="truncate text-xs text-white/30">{link.url}</p>
       </div>
