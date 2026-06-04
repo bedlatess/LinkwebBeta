@@ -116,6 +116,13 @@ export default function HomePage() {
                   立即加入 / 去登录
                   <ArrowRight className="h-4 w-4" />
                 </Link>
+                <Link
+                  href="/admin/login"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-bold text-emerald-200 shadow-[0_0_36px_rgba(52,211,153,0.12)] transition-all hover:-translate-y-0.5 hover:border-emerald-300/50 hover:bg-emerald-400/15 hover:text-emerald-100"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  进入后台
+                </Link>
               </div>
             </div>
 
