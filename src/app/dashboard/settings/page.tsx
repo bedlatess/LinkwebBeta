@@ -23,6 +23,7 @@ export default async function SettingsPage() {
       username: true,
       image: true,
       customDomain: true,
+      twoFactorEnabled: true,
     },
   });
 
@@ -46,6 +47,7 @@ export default async function SettingsPage() {
         username={user?.username ?? ""}
         initialImage={user?.image ?? null}
         initialDomain={user?.customDomain ?? null}
+        initialTwoFactorEnabled={user?.twoFactorEnabled ?? false}
       />
     </div>
   );

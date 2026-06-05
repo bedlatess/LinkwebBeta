@@ -109,6 +109,25 @@ export async function toggleOauthEnabled() {
   redirect(withToast("OAuth 登录设置已更新"));
 }
 
+export async function toggleRequireAdminTwoFactor() {
+  await requireAdminActionSession("permManageAuthSettings");
+
+  const settings = await prisma.siteSettings.upsert({
+    where: { id: "global" },
+    create: { id: "global" },
+    update: {},
+    select: { requireAdminTwoFactor: true },
+  });
+
+  await prisma.siteSettings.update({
+    where: { id: "global" },
+    data: { requireAdminTwoFactor: !settings.requireAdminTwoFactor },
+  });
+
+  revalidatePath("/sys-admin/settings");
+  redirect(withToast("管理员两步验证策略已更新"));
+}
+
 export async function toggleMaintenanceMode() {
   await requireAdminActionSession("permToggleMaintenance");
 

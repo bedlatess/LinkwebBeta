@@ -49,6 +49,10 @@ model User {
   permManageSiteSettings     Boolean @default(false) // edit public site display settings
   permManageAuthSettings     Boolean @default(false) // edit registration and OAuth flags
   permRunMaintenance         Boolean @default(false) // run cleanup operations
+  twoFactorEnabled           Boolean @default(false)
+  twoFactorSecret            String?
+  twoFactorConfirmedAt       DateTime?
+  twoFactorBackupCodes       String?
 
   // Relations
   accounts      Account[]
@@ -70,6 +74,10 @@ model AdminUser {
   role         String   @default("super_admin")
   isActive     Boolean  @default(true)
   tokenVersion Int      @default(0)
+  twoFactorEnabled     Boolean   @default(false)
+  twoFactorSecret      String?
+  twoFactorConfirmedAt DateTime?
+  twoFactorBackupCodes String?
   lastLoginAt  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -90,6 +98,7 @@ model SiteSettings {
   registrationEnabled Boolean  @default(true)
   oauthEnabled        Boolean  @default(true)
   isMaintenanceMode   Boolean  @default(false)
+  requireAdminTwoFactor Boolean @default(false)
   updatedAt           DateTime @updatedAt
 }
 

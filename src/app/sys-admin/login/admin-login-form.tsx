@@ -2,7 +2,7 @@
 
 import { TurnstileWidget } from "@/app/auth/signin/turnstile-widget";
 import { resolveAllowedAdminPath } from "@/lib/admin-route-permissions";
-import { Loader2, LogIn } from "lucide-react";
+import { KeyRound, Loader2, LogIn, ShieldCheck } from "lucide-react";
 import { getSession, signIn, signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -22,6 +22,11 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const [step, setStep] = useState<"password" | "two-factor">("password");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [twoFactorMode, setTwoFactorMode] = useState<"totp" | "recovery">(
+    "totp"
+  );
 
   const requiresTurnstile = Boolean(turnstileSiteKey);
 
@@ -55,6 +60,13 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
       const data = await response.json().catch(() => null);
 
       if (response.ok) {
+        if (data?.requiresTwoFactor) {
+          setStep("two-factor");
+          setPassword("");
+          setLoading(false);
+          return;
+        }
+
         router.push(callbackUrl);
         router.refresh();
         return;
@@ -117,6 +129,149 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleTwoFactorSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("/sys-admin/api/login/2fa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: twoFactorCode,
+          mode: twoFactorMode,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setError(
+          data?.error === "INVALID_RECOVERY_CODE"
+            ? "恢复码无效或已经使用。"
+            : data?.error === "TWO_FACTOR_SETUP_EXPIRED"
+            ? "两步验证会话已过期，请重新输入管理员密码。"
+            : "验证码无效，请重试。"
+        );
+
+        if (data?.error === "TWO_FACTOR_SETUP_EXPIRED") {
+          setStep("password");
+          setTwoFactorCode("");
+        }
+
+        return;
+      }
+
+      router.push(callbackUrl);
+      router.refresh();
+    } catch {
+      setError("网络错误，请稍后重试。");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (step === "two-factor") {
+    return (
+      <form onSubmit={handleTwoFactorSubmit} className="space-y-4">
+        <div className="rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm leading-6 text-emerald-100/80">
+          管理员密码已验证，请输入验证器 App 中的 6 位动态码。
+        </div>
+
+        <div className="grid grid-cols-2 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setTwoFactorMode("totp");
+              setTwoFactorCode("");
+              setError("");
+            }}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+              twoFactorMode === "totp"
+                ? "bg-emerald-300 text-slate-950"
+                : "text-white/45 hover:text-white"
+            }`}
+          >
+            验证器
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTwoFactorMode("recovery");
+              setTwoFactorCode("");
+              setError("");
+            }}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+              twoFactorMode === "recovery"
+                ? "bg-emerald-300 text-slate-950"
+                : "text-white/45 hover:text-white"
+            }`}
+          >
+            恢复码
+          </button>
+        </div>
+
+        <div>
+          <label
+            htmlFor="admin-two-factor-code"
+            className="mb-1.5 flex items-center gap-2 text-xs font-medium text-white/50"
+          >
+            {twoFactorMode === "totp" ? (
+              <ShieldCheck className="h-3.5 w-3.5" />
+            ) : (
+              <KeyRound className="h-3.5 w-3.5" />
+            )}
+            {twoFactorMode === "totp" ? "6 位验证码" : "恢复码"}
+          </label>
+          <input
+            id="admin-two-factor-code"
+            value={twoFactorCode}
+            onChange={(event) => setTwoFactorCode(event.target.value)}
+            inputMode={twoFactorMode === "totp" ? "numeric" : "text"}
+            autoComplete="one-time-code"
+            required
+            placeholder={twoFactorMode === "totp" ? "123456" : "ABCDE-12345"}
+            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-emerald-400/60 focus:bg-white/[0.06] focus:ring-2 focus:ring-emerald-400/10"
+          />
+        </div>
+
+        {error && (
+          <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading || !twoFactorCode.trim()}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ShieldCheck className="h-4 w-4" />
+          )}
+          完成两步验证
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setStep("password");
+            setTwoFactorCode("");
+            setError("");
+            resetTurnstile();
+          }}
+          className="w-full text-center text-xs text-white/35 transition hover:text-white/65"
+        >
+          返回密码登录
+        </button>
+      </form>
+    );
   }
 
   return (

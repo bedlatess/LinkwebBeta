@@ -12,6 +12,7 @@
 import { auth } from "@/lib/auth";
 import { verifyAdminSessionFromRequest } from "@/lib/admin-session";
 import { findMatchingIpBanRule, getClientIp } from "@/lib/ip-ban";
+import { verifyTwoFactorVerificationToken } from "@/lib/two-factor";
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -35,6 +36,11 @@ export default auth(async (req) => {
     : "localhost";
   const isSysAdminRoute =
     pathname === "/sys-admin" || pathname.startsWith("/sys-admin/");
+  const isRegularTwoFactorRoute =
+    pathname === "/auth/2fa" || pathname.startsWith("/api/settings/2fa");
+  const isAdminTwoFactorRoute =
+    pathname.startsWith("/sys-admin/api/2fa") ||
+    pathname.startsWith("/sys-admin/api/login");
   const adminSession = await verifyAdminSessionFromRequest(req);
   const normalSessionUserId = req.auth?.user?.id;
   let hasNormalAdminSession = false;
@@ -74,6 +80,63 @@ export default auth(async (req) => {
       const loginUrl = new URL("/sys-admin/login", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+
+    try {
+      const settings = await getPrisma().siteSettings.findUnique({
+        where: { id: "global" },
+        select: { requireAdminTwoFactor: true },
+      });
+      const requireAdminTwoFactor = settings?.requireAdminTwoFactor === true;
+
+      if (adminSession) {
+        const admin = await getPrisma().adminUser.findUnique({
+          where: { id: adminSession.adminId },
+          select: { twoFactorEnabled: true },
+        });
+
+        if (
+          requireAdminTwoFactor &&
+          admin?.twoFactorEnabled !== true &&
+          pathname !== "/sys-admin/settings" &&
+          !isAdminTwoFactorRoute
+        ) {
+          const settingsUrl = new URL("/sys-admin/settings", req.url);
+          settingsUrl.searchParams.set("twoFactorRequired", "1");
+          return NextResponse.redirect(settingsUrl);
+        }
+      }
+
+      if (normalSessionUserId && hasNormalAdminSession) {
+        const user = await getPrisma().user.findUnique({
+          where: { id: normalSessionUserId },
+          select: { twoFactorEnabled: true },
+        });
+        const twoFactorVerified = await verifyTwoFactorVerificationToken(req, {
+          actorType: "user",
+          actorId: normalSessionUserId,
+        });
+
+        if (user?.twoFactorEnabled && !twoFactorVerified) {
+          const twoFactorUrl = new URL("/auth/2fa", req.url);
+          twoFactorUrl.searchParams.set("callbackUrl", pathname);
+          return NextResponse.redirect(twoFactorUrl);
+        }
+
+        if (
+          requireAdminTwoFactor &&
+          user?.twoFactorEnabled !== true &&
+          pathname !== "/dashboard/settings" &&
+          pathname !== "/sys-admin/settings" &&
+          !isAdminTwoFactorRoute
+        ) {
+          const settingsUrl = new URL("/dashboard/settings", req.url);
+          settingsUrl.searchParams.set("twoFactorRequired", "admin");
+          return NextResponse.redirect(settingsUrl);
+        }
+      }
+    } catch {
+      // Keep admin traffic reachable if the new 2FA columns are not migrated yet.
     }
   }
 
@@ -167,10 +230,7 @@ export default auth(async (req) => {
   // ═══════════════════════════════════════════════════════════════
 
   // Allow auth-related pages, NextAuth API routes, and register route
-  if (
-    pathname.startsWith("/auth") ||
-    pathname.startsWith("/api/auth")
-  ) {
+  if (pathname.startsWith("/auth") || pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
@@ -187,11 +247,24 @@ export default auth(async (req) => {
       try {
         const user = await getPrisma().user.findUnique({
           where: { id: userId },
-          select: { isBanned: true },
+          select: { isBanned: true, twoFactorEnabled: true },
         });
 
         if (user?.isBanned) {
           return NextResponse.redirect(new URL("/banned?type=account", req.url));
+        }
+
+        if (
+          user?.twoFactorEnabled &&
+          !isRegularTwoFactorRoute &&
+          !(await verifyTwoFactorVerificationToken(req, {
+            actorType: "user",
+            actorId: userId,
+          }))
+        ) {
+          const twoFactorUrl = new URL("/auth/2fa", req.url);
+          twoFactorUrl.searchParams.set("callbackUrl", pathname);
+          return NextResponse.redirect(twoFactorUrl);
         }
       } catch {
         return NextResponse.redirect(new URL("/auth/signin", req.url));
@@ -215,12 +288,26 @@ export default auth(async (req) => {
       try {
         const user = await getPrisma().user.findUnique({
           where: { id: userId },
-          select: { isBanned: true },
+          select: { isBanned: true, twoFactorEnabled: true },
         });
 
         if (user?.isBanned) {
           return NextResponse.json(
             { error: "此账号已被系统管理员封禁" },
+            { status: 403 }
+          );
+        }
+
+        if (
+          user?.twoFactorEnabled &&
+          !isRegularTwoFactorRoute &&
+          !(await verifyTwoFactorVerificationToken(req, {
+            actorType: "user",
+            actorId: userId,
+          }))
+        ) {
+          return NextResponse.json(
+            { error: "Two-factor authentication required" },
             { status: 403 }
           );
         }

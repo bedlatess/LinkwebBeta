@@ -70,6 +70,10 @@ async function main() {
         "permManageSiteSettings" BOOLEAN NOT NULL DEFAULT false,
         "permManageAuthSettings" BOOLEAN NOT NULL DEFAULT false,
         "permRunMaintenance" BOOLEAN NOT NULL DEFAULT false,
+        "twoFactorEnabled" BOOLEAN NOT NULL DEFAULT false,
+        "twoFactorSecret" TEXT,
+        "twoFactorConfirmedAt" DATETIME,
+        "twoFactorBackupCodes" TEXT,
         "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -140,6 +144,10 @@ async function main() {
     "permRunMaintenance",
     "BOOLEAN NOT NULL DEFAULT false"
   );
+  await addColumn("User", "twoFactorEnabled", "BOOLEAN NOT NULL DEFAULT false");
+  await addColumn("User", "twoFactorSecret", "TEXT");
+  await addColumn("User", "twoFactorConfirmedAt", "DATETIME");
+  await addColumn("User", "twoFactorBackupCodes", "TEXT");
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "AdminUser" (
@@ -150,11 +158,23 @@ async function main() {
       "role" TEXT NOT NULL DEFAULT 'super_admin',
       "isActive" BOOLEAN NOT NULL DEFAULT true,
       "tokenVersion" INTEGER NOT NULL DEFAULT 0,
+      "twoFactorEnabled" BOOLEAN NOT NULL DEFAULT false,
+      "twoFactorSecret" TEXT,
+      "twoFactorConfirmedAt" DATETIME,
+      "twoFactorBackupCodes" TEXT,
       "lastLoginAt" DATETIME,
       "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  await addColumn(
+    "AdminUser",
+    "twoFactorEnabled",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn("AdminUser", "twoFactorSecret", "TEXT");
+  await addColumn("AdminUser", "twoFactorConfirmedAt", "DATETIME");
+  await addColumn("AdminUser", "twoFactorBackupCodes", "TEXT");
 
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "SiteSettings" (
@@ -172,12 +192,18 @@ async function main() {
       "registrationEnabled" BOOLEAN NOT NULL DEFAULT true,
       "oauthEnabled" BOOLEAN NOT NULL DEFAULT true,
       "isMaintenanceMode" BOOLEAN NOT NULL DEFAULT false,
+      "requireAdminTwoFactor" BOOLEAN NOT NULL DEFAULT false,
       "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
   await addColumn(
     "SiteSettings",
     "isMaintenanceMode",
+    "BOOLEAN NOT NULL DEFAULT false"
+  );
+  await addColumn(
+    "SiteSettings",
+    "requireAdminTwoFactor",
     "BOOLEAN NOT NULL DEFAULT false"
   );
   await addColumn("SiteSettings", "supportEmail", "TEXT");

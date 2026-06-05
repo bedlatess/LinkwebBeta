@@ -1,5 +1,6 @@
 import { getAdminActor } from "@/lib/admin-action-auth";
 import { getGlobalSiteSettings } from "@/lib/site-settings";
+import { prisma } from "@/lib/prisma";
 import {
   AlertTriangle,
   Bell,
@@ -17,9 +18,11 @@ import { redirect } from "next/navigation";
 import {
   toggleMaintenanceMode,
   toggleOauthEnabled,
+  toggleRequireAdminTwoFactor,
   toggleRegistrationEnabled,
   updateSiteBasics,
 } from "./settings-actions";
+import { AdminTwoFactorCard } from "./admin-two-factor-card";
 import { SiteIconUploader } from "./site-icon-uploader";
 
 function SwitchVisual({ enabled }: { enabled: boolean }) {
@@ -124,6 +127,10 @@ export default async function AdminSettingsPage() {
   const canManageAuthSettings = actor?.permissions.permManageAuthSettings;
   const canToggleMaintenance = actor?.permissions.permToggleMaintenance;
 
+  if (!actor) {
+    redirect("/sys-admin/login");
+  }
+
   if (!canManageSiteSettings && !canManageAuthSettings && !canToggleMaintenance) {
     redirect(
       `/sys-admin?toast=${encodeURIComponent("当前管理员没有全局设置权限")}`
@@ -131,6 +138,16 @@ export default async function AdminSettingsPage() {
   }
 
   const settings = await getGlobalSiteSettings();
+  const adminTwoFactor =
+    actor.type === "SUPER_ADMIN"
+      ? await prisma.adminUser.findUnique({
+          where: { id: actor.adminId },
+          select: { twoFactorEnabled: true },
+        })
+      : await prisma.user.findUnique({
+          where: { id: actor.userId },
+          select: { twoFactorEnabled: true },
+        });
 
   return (
     <div className="space-y-6">
@@ -396,8 +413,20 @@ export default async function AdminSettingsPage() {
             icon={LockKeyhole}
             disabled={!canManageAuthSettings}
           />
+          <FeatureFlagCard
+            title="强制管理员启用 2FA"
+            description="开启后，后台管理员需要配置验证器 App 两步验证，才能继续访问受保护的后台区域。"
+            enabled={settings.requireAdminTwoFactor}
+            action={toggleRequireAdminTwoFactor}
+            icon={ShieldCheck}
+            disabled={!canManageAuthSettings}
+          />
         </div>
       </section>
+
+      <AdminTwoFactorCard
+        initialEnabled={adminTwoFactor?.twoFactorEnabled === true}
+      />
 
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">
         <div className="mb-5">

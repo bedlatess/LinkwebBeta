@@ -3,6 +3,12 @@ import {
   setAdminSessionCookie,
 } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import {
+  ADMIN_TWO_FACTOR_CHALLENGE_COOKIE,
+  adminTwoFactorChallengeMaxAge,
+  createAdminTwoFactorChallengeToken,
+  getTwoFactorCookieOptions,
+} from "@/lib/two-factor";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
@@ -29,6 +35,7 @@ export async function POST(request: Request) {
       role: true,
       isActive: true,
       tokenVersion: true,
+      twoFactorEnabled: true,
     },
   });
 
@@ -40,6 +47,24 @@ export async function POST(request: Request) {
 
   if (!passwordOk) {
     return NextResponse.json(INVALID_LOGIN_RESPONSE, { status: 401 });
+  }
+
+  if (admin.twoFactorEnabled) {
+    const token = await createAdminTwoFactorChallengeToken({
+      adminId: admin.id,
+      email: admin.email,
+      role: admin.role,
+      tokenVersion: admin.tokenVersion,
+    });
+    const response = NextResponse.json({ requiresTwoFactor: true });
+
+    response.cookies.set(
+      ADMIN_TWO_FACTOR_CHALLENGE_COOKIE,
+      token,
+      getTwoFactorCookieOptions(adminTwoFactorChallengeMaxAge)
+    );
+
+    return response;
   }
 
   await prisma.adminUser.update({
