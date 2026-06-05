@@ -19,6 +19,11 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { getGlobalSiteSettings } from "@/lib/site-settings";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import {
+  decryptTwoFactorSecret,
+  verifyAndConsumeBackupCode,
+  verifyTotpToken,
+} from "@/lib/two-factor";
 import bcrypt from "bcryptjs";
 
 const githubClientId = process.env.GITHUB_CLIENT_ID;
@@ -71,11 +76,13 @@ declare module "next-auth" {
     user: DefaultSession["user"] & {
       id: string;
       role: UserRole;
+      twoFactorVerifiedAt?: number;
     } & AdminPermissionClaims;
   }
 
   interface User {
     role?: UserRole;
+    twoFactorVerifiedAt?: number;
     permManageUsers?: boolean;
     permDeleteUsers?: boolean;
     permManageLinks?: boolean;
@@ -98,6 +105,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     role?: UserRole;
+    twoFactorVerifiedAt?: number;
     permManageUsers?: boolean;
     permDeleteUsers?: boolean;
     permManageLinks?: boolean;
@@ -118,6 +126,18 @@ declare module "next-auth/jwt" {
 
 class AccountBannedError extends CredentialsSignin {
   code = "account_banned";
+}
+
+class TwoFactorRequiredError extends CredentialsSignin {
+  code = "two_factor_required";
+}
+
+class TwoFactorUnavailableError extends CredentialsSignin {
+  code = "two_factor_unavailable";
+}
+
+class InvalidTwoFactorCodeError extends CredentialsSignin {
+  code = "invalid_two_factor_code";
 }
 
 function normalizeAdminClaims(user: Partial<AdminPermissionClaims> & { role?: string } | null) {
@@ -224,6 +244,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email", placeholder: "admin@linkweb.local" },
         password: { label: "Password", type: "password" },
+        twoFactorCode: { label: "Two-Factor Code", type: "text" },
+        twoFactorMode: { label: "Two-Factor Mode", type: "text" },
         turnstileToken: { label: "Turnstile Token", type: "hidden" },
       },
       async authorize(credentials, request) {
@@ -241,12 +263,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email) {
           return null;
         }
 
         const email = (credentials.email as string).toLowerCase().trim();
-        const password = credentials.password as string;
+        const password =
+          typeof credentials.password === "string"
+            ? credentials.password
+            : "";
+        const twoFactorCode =
+          typeof credentials.twoFactorCode === "string"
+            ? credentials.twoFactorCode
+            : "";
+        const twoFactorMode =
+          credentials.twoFactorMode === "recovery" ? "recovery" : "totp";
 
         // Find user by email
         const user = await prisma.user.findUnique({
@@ -274,11 +305,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             permManageSiteSettings: true,
             permManageAuthSettings: true,
             permRunMaintenance: true,
+            twoFactorEnabled: true,
+            twoFactorSecret: true,
+            twoFactorConfirmedAt: true,
+            twoFactorBackupCodes: true,
           },
         });
 
-        if (!user || !user.passwordHash) {
-          // No user found, or user has no password (OAuth-only account)
+        if (!user) {
+          // No user found.
+          return null;
+        }
+
+        const hasPassword = Boolean(user.passwordHash);
+        const isTwoFactorLogin = Boolean(twoFactorCode.trim());
+
+        if (!hasPassword && !isTwoFactorLogin) {
+          // OAuth-only account without a local password.
           return null;
         }
 
@@ -290,8 +333,60 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new AccountBannedError();
         }
 
-        // Verify password
-        const isValid = await bcrypt.compare(password, user.passwordHash);
+        if (user.twoFactorEnabled) {
+          if (twoFactorCode.trim()) {
+            if (!user.twoFactorSecret) {
+              throw new TwoFactorUnavailableError();
+            }
+
+            if (twoFactorMode === "recovery") {
+              const recovery = verifyAndConsumeBackupCode(
+                user.twoFactorBackupCodes,
+                twoFactorCode
+              );
+
+              if (!recovery.valid) {
+                throw new InvalidTwoFactorCodeError();
+              }
+
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { twoFactorBackupCodes: recovery.serialized },
+                select: { id: true },
+              });
+            } else if (
+              !verifyTotpToken(
+                decryptTwoFactorSecret(user.twoFactorSecret),
+                twoFactorCode
+              )
+            ) {
+              throw new InvalidTwoFactorCodeError();
+            }
+          } else if (password) {
+            if (!user.passwordHash) {
+              return null;
+            }
+
+            const passwordOk = await bcrypt.compare(password, user.passwordHash);
+
+            if (!passwordOk) {
+              return null;
+            }
+
+            throw new TwoFactorRequiredError();
+          } else {
+            return null;
+          }
+        } else if (isTwoFactorLogin) {
+          throw new TwoFactorUnavailableError();
+        } else if (!password || !user.passwordHash) {
+          return null;
+        }
+
+        const passwordHash = user.passwordHash;
+        const isValid =
+          user.twoFactorEnabled ||
+          (passwordHash ? await bcrypt.compare(password, passwordHash) : false);
         if (!isValid) {
           return null;
         }
@@ -318,6 +413,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           permManageSiteSettings: user.permManageSiteSettings,
           permManageAuthSettings: user.permManageAuthSettings,
           permRunMaintenance: user.permRunMaintenance,
+          twoFactorVerifiedAt: user.twoFactorEnabled ? Date.now() : undefined,
         };
       },
     }),
@@ -400,6 +496,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account, trigger }) {
       if (user) {
         token.id = String(user.id);
+        token.twoFactorVerifiedAt =
+          typeof user.twoFactorVerifiedAt === "number"
+            ? user.twoFactorVerifiedAt
+            : undefined;
         applyClaimsToToken(
           token,
           await loadUserAdminClaims(String(user.id), user.email ?? token.email)
@@ -430,6 +530,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role === "ADMIN" ? "ADMIN" : "USER";
+        session.user.twoFactorVerifiedAt =
+          typeof token.twoFactorVerifiedAt === "number"
+            ? token.twoFactorVerifiedAt
+            : undefined;
         session.user.permManageUsers = token.permManageUsers === true;
         session.user.permDeleteUsers = token.permDeleteUsers === true;
         session.user.permManageLinks = token.permManageLinks === true;

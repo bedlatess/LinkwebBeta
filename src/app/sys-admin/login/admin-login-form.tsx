@@ -23,6 +23,9 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileNonce, setTurnstileNonce] = useState(0);
   const [step, setStep] = useState<"password" | "two-factor">("password");
+  const [twoFactorTarget, setTwoFactorTarget] = useState<"super" | "normal">(
+    "super"
+  );
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [twoFactorMode, setTwoFactorMode] = useState<"totp" | "recovery">(
     "totp"
@@ -61,6 +64,7 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
 
       if (response.ok) {
         if (data?.requiresTwoFactor) {
+          setTwoFactorTarget("super");
           setStep("two-factor");
           setPassword("");
           setLoading(false);
@@ -81,6 +85,16 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
       });
 
       if (result?.error) {
+        if (result.code === "two_factor_required") {
+          setTwoFactorTarget("normal");
+          setStep("two-factor");
+          setPassword("");
+          setLoading(false);
+          setError("该管理员账号已开启 2FA，请使用两步验证方式登录。");
+          resetTurnstile();
+          return;
+        }
+
         setError(
           result.code === "account_banned"
             ? "此账号已被系统管理员封禁。"
@@ -139,6 +153,69 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
     setLoading(true);
 
     try {
+      if (twoFactorTarget === "normal") {
+        if (requiresTurnstile && !turnstileToken) {
+          setError("请先完成人机验证。");
+          setLoading(false);
+          return;
+        }
+
+        const result = await signIn("credentials", {
+          email,
+          twoFactorCode,
+          twoFactorMode,
+          turnstileToken,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          setError(
+            result.code === "invalid_two_factor_code"
+              ? twoFactorMode === "recovery"
+                ? "恢复码无效或已经使用。"
+                : "验证器动态码无效，请重试。"
+              : "两步验证登录失败，请检查邮箱和验证码。"
+          );
+          resetTurnstile();
+          return;
+        }
+
+        const session = await getSession();
+
+        if (session?.user?.role !== "ADMIN") {
+          await signOut({ redirect: false });
+          setError("该账号尚未被授予系统后台管理员身份。");
+          resetTurnstile();
+          return;
+        }
+
+        router.push(
+          resolveAllowedAdminPath(
+            {
+              permManageUsers: session.user.permManageUsers,
+              permDeleteUsers: session.user.permDeleteUsers,
+              permManageLinks: session.user.permManageLinks,
+              permManageSettings: session.user.permManageSettings,
+              permToggleMaintenance: session.user.permToggleMaintenance,
+              permViewUsers: session.user.permViewUsers,
+              permBanUsers: session.user.permBanUsers,
+              permEditUsers: session.user.permEditUsers,
+              permResetUserPasswords: session.user.permResetUserPasswords,
+              permManageUserEntitlements:
+                session.user.permManageUserEntitlements,
+              permViewLinks: session.user.permViewLinks,
+              permDeleteLinks: session.user.permDeleteLinks,
+              permManageSiteSettings: session.user.permManageSiteSettings,
+              permManageAuthSettings: session.user.permManageAuthSettings,
+              permRunMaintenance: session.user.permRunMaintenance,
+            },
+            callbackUrl
+          )
+        );
+        router.refresh();
+        return;
+      }
+
       const response = await fetch("/sys-admin/api/login/2fa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -262,6 +339,7 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
           type="button"
           onClick={() => {
             setStep("password");
+            setTwoFactorTarget("super");
             setTwoFactorCode("");
             setError("");
             resetTurnstile();

@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 const ERROR_MESSAGES: Record<string, string> = {
-  INVALID_TWO_FACTOR_CODE: "Invalid authenticator code.",
-  INVALID_RECOVERY_CODE: "Invalid or already used recovery code.",
-  TWO_FACTOR_NOT_ENABLED: "Two-factor authentication is not enabled.",
+  INVALID_TWO_FACTOR_CODE: "验证器动态码无效，请重新输入。",
+  INVALID_RECOVERY_CODE: "恢复码无效或已经使用。",
+  TWO_FACTOR_NOT_ENABLED: "该账号尚未开启两步验证。",
 };
 
 export function TwoFactorChallengeForm() {
@@ -32,7 +32,7 @@ export function TwoFactorChallengeForm() {
 
     if (!response.ok) {
       const key = typeof data?.error === "string" ? data.error : "";
-      setError(ERROR_MESSAGES[key] ?? "Verification failed.");
+      setError(ERROR_MESSAGES[key] ?? "验证失败，请重试。");
       return;
     }
 
@@ -58,7 +58,7 @@ export function TwoFactorChallengeForm() {
               : "text-white/45 hover:text-white"
           }`}
         >
-          Authenticator
+          验证器动态码
         </button>
         <button
           type="button"
@@ -73,7 +73,7 @@ export function TwoFactorChallengeForm() {
               : "text-white/45 hover:text-white"
           }`}
         >
-          Recovery code
+          恢复码
         </button>
       </div>
 
@@ -87,7 +87,7 @@ export function TwoFactorChallengeForm() {
           ) : (
             <KeyRound className="h-3.5 w-3.5" />
           )}
-          {mode === "totp" ? "6-digit code" : "Recovery code"}
+          {mode === "totp" ? "6 位动态码" : "一次性恢复码"}
         </label>
         <input
           id="two-factor-code"
@@ -117,7 +117,7 @@ export function TwoFactorChallengeForm() {
         ) : (
           <ShieldCheck className="h-4 w-4" />
         )}
-        Verify and continue
+        验证并继续
       </button>
     </form>
   );

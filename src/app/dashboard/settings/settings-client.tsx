@@ -69,6 +69,9 @@ export function SettingsClient({
   const [twoFactorSecret, setTwoFactorSecret] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [twoFactorDisableCode, setTwoFactorDisableCode] = useState("");
+  const [twoFactorDisableMode, setTwoFactorDisableMode] = useState<
+    "totp" | "recovery"
+  >("totp");
   const [twoFactorBackupCodes, setTwoFactorBackupCodes] = useState<string[]>(
     []
   );
@@ -162,15 +165,16 @@ export function SettingsClient({
   const publicHref = username ? `/${username}` : "/";
 
   function twoFactorMessage(code: unknown) {
-    if (code === "INVALID_TWO_FACTOR_CODE") return "Invalid authenticator code.";
-    if (code === "INVALID_RECOVERY_CODE") return "Invalid recovery code.";
+    if (code === "INVALID_TWO_FACTOR_CODE") return "验证器动态码无效。";
+    if (code === "INVALID_RECOVERY_CODE") return "恢复码无效或已经使用。";
     if (code === "TWO_FACTOR_SETUP_EXPIRED") {
-      return "The setup session expired. Please start again.";
+      return "设置会话已过期，请重新开始。";
     }
     if (code === "TWO_FACTOR_ALREADY_ENABLED") {
-      return "Two-factor authentication is already enabled.";
+      return "两步验证已经启用。";
     }
-    return "Two-factor operation failed.";
+    if (code === "TWO_FACTOR_NOT_ENABLED") return "两步验证尚未启用。";
+    return "两步验证操作失败。";
   }
 
   async function startTwoFactorSetup() {
@@ -240,15 +244,19 @@ export function SettingsClient({
       const res = await fetch("/api/settings/2fa/disable", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: twoFactorDisableCode, mode: "totp" }),
+        body: JSON.stringify({
+          code: twoFactorDisableCode,
+          mode: twoFactorDisableMode,
+        }),
       });
       const data = await readJsonResponse<{ error?: string }>(res);
 
       if (!res.ok) throw new Error(twoFactorMessage(data.error));
       setTwoFactorEnabled(false);
       setTwoFactorDisableCode("");
+      setTwoFactorDisableMode("totp");
       setTwoFactorBackupCodes([]);
-      setTwoFactorNotice("Two-factor authentication is disabled.");
+      setTwoFactorNotice("两步验证已关闭，原恢复码已自动失效。");
     } catch (error) {
       setTwoFactorError(
         error instanceof Error ? error.message : "Two-factor disable failed."
@@ -277,12 +285,12 @@ export function SettingsClient({
       if (!res.ok) throw new Error(twoFactorMessage(data.error));
       setTwoFactorBackupCodes(data.backupCodes ?? []);
       setTwoFactorDisableCode("");
-      setTwoFactorNotice("New recovery codes generated.");
+      setTwoFactorNotice("新的恢复码已生成，旧恢复码已失效。");
     } catch (error) {
       setTwoFactorError(
         error instanceof Error
           ? error.message
-          : "Recovery code regeneration failed."
+          : "恢复码重新生成失败。"
       );
     } finally {
       setTwoFactorLoading(false);
@@ -291,7 +299,7 @@ export function SettingsClient({
 
   async function copyBackupCodes() {
     await navigator.clipboard.writeText(twoFactorBackupCodes.join("\n"));
-    setTwoFactorNotice("Recovery codes copied.");
+    setTwoFactorNotice("恢复码已复制。");
   }
 
   return (
@@ -505,12 +513,11 @@ export function SettingsClient({
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-white/88">
-              Two-factor authentication
-            </h2>
+              <h2 className="text-base font-semibold text-white/88">
+                两步验证
+              </h2>
             <p className="text-sm text-white/40">
-              Protect your account with an authenticator app. Email and SMS
-              codes are not used.
+              使用验证器 App 保护账号，不使用邮件或短信验证码。
             </p>
           </div>
         </div>
@@ -519,12 +526,11 @@ export function SettingsClient({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-white/80">
-                Status: {twoFactorEnabled ? "Enabled" : "Disabled"}
+                当前状态：{twoFactorEnabled ? "已启用" : "未启用"}
               </p>
               <p className="mt-1 text-sm leading-6 text-white/42">
-                Scan a QR-Code with Google Authenticator, Microsoft
-                Authenticator, 1Password, Bitwarden, Aegis, or any compatible
-                TOTP app.
+                使用 Google Authenticator、Microsoft Authenticator、1Password、Bitwarden、Aegis
+                或其他兼容 TOTP 的验证器扫描二维码。
               </p>
             </div>
             {!twoFactorEnabled && !twoFactorQr && (
@@ -539,7 +545,7 @@ export function SettingsClient({
                 ) : (
                   <ShieldCheck className="h-4 w-4" />
                 )}
-                Enable 2FA
+                启用 2FA
               </button>
             )}
           </div>
@@ -556,10 +562,10 @@ export function SettingsClient({
             <div className="space-y-3">
               <div>
                 <p className="text-sm font-semibold text-white/80">
-                  1. Scan the QR-Code
+                  1. 扫描二维码
                 </p>
                 <p className="mt-1 text-sm text-white/42">
-                  If scanning fails, enter this secret manually:
+                  如果无法扫码，请手动输入下面的密钥：
                 </p>
                 <code className="mt-2 block break-all rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2 text-xs text-emerald-100">
                   {twoFactorSecret}
@@ -568,7 +574,7 @@ export function SettingsClient({
               <div>
                 <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-white/50">
                   <KeyRound className="h-3.5 w-3.5" />
-                  2. Enter the 6-digit code
+                  2. 输入 6 位动态码
                 </label>
                 <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
                   <input
@@ -589,7 +595,7 @@ export function SettingsClient({
                     ) : (
                       <Check className="h-4 w-4" />
                     )}
-                    Confirm
+                    确认启用
                   </button>
                 </div>
               </div>
@@ -601,26 +607,64 @@ export function SettingsClient({
           <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 p-4">
             <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-white/50">
               <KeyRound className="h-3.5 w-3.5" />
-              Current authenticator code
+              关闭或重置前请先验证身份
             </label>
+            <div className="mb-3 grid grid-cols-2 rounded-2xl border border-white/10 bg-slate-950/35 p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setTwoFactorDisableMode("totp");
+                  setTwoFactorDisableCode("");
+                  setTwoFactorError("");
+                }}
+                className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                  twoFactorDisableMode === "totp"
+                    ? "bg-emerald-300 text-slate-950"
+                    : "text-white/45 hover:text-white"
+                }`}
+              >
+                验证器动态码
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTwoFactorDisableMode("recovery");
+                  setTwoFactorDisableCode("");
+                  setTwoFactorError("");
+                }}
+                className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                  twoFactorDisableMode === "recovery"
+                    ? "bg-emerald-300 text-slate-950"
+                    : "text-white/45 hover:text-white"
+                }`}
+              >
+                恢复码
+              </button>
+            </div>
             <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto]">
               <input
                 value={twoFactorDisableCode}
                 onChange={(event) =>
                   setTwoFactorDisableCode(event.target.value)
                 }
-                inputMode="numeric"
-                placeholder="123456"
+                inputMode={twoFactorDisableMode === "totp" ? "numeric" : "text"}
+                placeholder={
+                  twoFactorDisableMode === "totp" ? "123456" : "ABCDE-12345"
+                }
                 className="w-full rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-emerald-300/45 focus:ring-2 focus:ring-emerald-300/10"
               />
               <button
                 type="button"
                 onClick={regenerateBackupCodes}
-                disabled={twoFactorLoading || !twoFactorDisableCode.trim()}
+                disabled={
+                  twoFactorLoading ||
+                  !twoFactorDisableCode.trim() ||
+                  twoFactorDisableMode !== "totp"
+                }
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white/65 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <RefreshCw className="h-4 w-4" />
-                New recovery codes
+                生成新恢复码
               </button>
               <button
                 type="button"
@@ -629,7 +673,7 @@ export function SettingsClient({
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <X className="h-4 w-4" />
-                Disable 2FA
+                关闭 2FA
               </button>
             </div>
           </div>
@@ -640,10 +684,10 @@ export function SettingsClient({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-amber-100">
-                  Save these recovery codes now.
+                  请立即保存这些恢复码。
                 </p>
                 <p className="mt-1 text-sm text-amber-100/60">
-                  They are shown once and each code can be used only one time.
+                  每个恢复码只能使用一次；关闭 2FA 后这些恢复码会自动失效。
                 </p>
               </div>
               <button
@@ -652,7 +696,7 @@ export function SettingsClient({
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200/20 bg-amber-200/10 px-4 py-2.5 text-sm font-semibold text-amber-100 transition hover:bg-amber-200/15"
               >
                 <Copy className="h-4 w-4" />
-                Copy
+                复制
               </button>
             </div>
             <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">

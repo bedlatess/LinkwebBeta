@@ -7,9 +7,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   BadgeCheck,
+  KeyRound,
   Loader2,
   LockKeyhole,
   Mail,
+  QrCode,
   ShieldCheck,
   UserPlus,
 } from "lucide-react";
@@ -76,10 +78,16 @@ export function SignInContent({
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
   const error = searchParams.get("error");
 
-  const [mode, setMode] = useState<"signin" | "register">("signin");
+  const [mode, setMode] = useState<"signin" | "two-factor" | "register">(
+    "signin"
+  );
   const [isPending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [twoFactorMode, setTwoFactorMode] = useState<"totp" | "recovery">(
+    "totp"
+  );
   const [formError, setFormError] = useState("");
   const [formNotice, setFormNotice] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -123,7 +131,53 @@ export function SignInContent({
       setFormError(
         result.code === "account_banned"
           ? "此账号已被系统管理员封禁。"
+          : result.code === "two_factor_required"
+          ? "该账号已开启 2FA 功能，请使用两步验证方式登录。"
           : "人机验证未通过，或邮箱密码错误，请重试。"
+      );
+      if (result.code === "two_factor_required") {
+        setMode("two-factor");
+        setPassword("");
+      }
+      resetTurnstile();
+      return;
+    }
+
+    startTransition(() => {
+      router.push(callbackUrl);
+      router.refresh();
+    });
+  }
+
+  async function handleTwoFactorSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setFormError("");
+    setFormNotice("");
+
+    if (requiresTurnstile && !turnstileToken) {
+      setFormError("请先完成人机验证。");
+      return;
+    }
+
+    const result = await signIn("credentials", {
+      email,
+      twoFactorCode,
+      twoFactorMode,
+      turnstileToken,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setFormError(
+        result.code === "two_factor_unavailable"
+          ? "该账号尚未开启 2FA，请使用密码登录或先进入设置启用。"
+          : result.code === "invalid_two_factor_code"
+          ? twoFactorMode === "recovery"
+            ? "恢复码无效或已经使用。"
+            : "验证器动态码无效，请重新输入。"
+          : result.code === "account_banned"
+          ? "此账号已被系统管理员封禁。"
+          : "两步验证登录失败，请检查邮箱和验证码。"
       );
       resetTurnstile();
       return;
@@ -210,6 +264,41 @@ export function SignInContent({
               </div>
 
               <div className="p-7">
+                <div className="mb-5 grid grid-cols-2 rounded-2xl border border-white/10 bg-slate-950/35 p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("signin");
+                      setFormError("");
+                      setFormNotice("");
+                    }}
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
+                      mode === "signin"
+                        ? "bg-cyan-300 text-slate-950"
+                        : "text-white/45 hover:text-white"
+                    }`}
+                  >
+                    <LockKeyhole className="h-3.5 w-3.5" />
+                    密码登录
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("two-factor");
+                      setFormError("");
+                      setFormNotice("");
+                    }}
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
+                      mode === "two-factor"
+                        ? "bg-emerald-300 text-slate-950"
+                        : "text-white/45 hover:text-white"
+                    }`}
+                  >
+                    <QrCode className="h-3.5 w-3.5" />
+                    2FA 扫码登录
+                  </button>
+                </div>
+
                 {hasOAuthProvider && (
                   <div className="mb-5 grid gap-3">
                     {oauthProviders.github && (
@@ -249,6 +338,7 @@ export function SignInContent({
                   </div>
                 )}
 
+                {mode === "signin" ? (
                 <form onSubmit={handleCredentialsSubmit} className="space-y-4">
                   <div>
                     <label
@@ -337,6 +427,137 @@ export function SignInContent({
                     )}
                   </button>
                 </form>
+                ) : (
+                <form onSubmit={handleTwoFactorSubmit} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="two-factor-email"
+                      className="mb-1.5 block text-xs font-medium text-white/50"
+                    >
+                      邮箱地址
+                    </label>
+                    <input
+                      id="two-factor-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="test@pawn.eu.org"
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-emerald-300/45 focus:ring-2 focus:ring-emerald-300/10"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 rounded-2xl border border-white/10 bg-slate-950/35 p-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTwoFactorMode("totp");
+                        setTwoFactorCode("");
+                        setFormError("");
+                      }}
+                      className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                        twoFactorMode === "totp"
+                          ? "bg-emerald-300 text-slate-950"
+                          : "text-white/45 hover:text-white"
+                      }`}
+                    >
+                      验证器动态码
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTwoFactorMode("recovery");
+                        setTwoFactorCode("");
+                        setFormError("");
+                      }}
+                      className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                        twoFactorMode === "recovery"
+                          ? "bg-emerald-300 text-slate-950"
+                          : "text-white/45 hover:text-white"
+                      }`}
+                    >
+                      恢复码
+                    </button>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="two-factor-code"
+                      className="mb-1.5 flex items-center gap-2 text-xs font-medium text-white/50"
+                    >
+                      {twoFactorMode === "totp" ? (
+                        <QrCode className="h-3.5 w-3.5" />
+                      ) : (
+                        <KeyRound className="h-3.5 w-3.5" />
+                      )}
+                      {twoFactorMode === "totp"
+                        ? "扫描绑定二维码后，由验证器 App 生成的 6 位动态码"
+                        : "一次性恢复码"}
+                    </label>
+                    <input
+                      id="two-factor-code"
+                      value={twoFactorCode}
+                      onChange={(event) => setTwoFactorCode(event.target.value)}
+                      inputMode={twoFactorMode === "totp" ? "numeric" : "text"}
+                      autoComplete="one-time-code"
+                      required
+                      placeholder={twoFactorMode === "totp" ? "123456" : "ABCDE-12345"}
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/22 focus:border-emerald-300/45 focus:ring-2 focus:ring-emerald-300/10"
+                    />
+                  </div>
+
+                  {requiresTurnstile && (
+                    <TurnstileWidget
+                      key={turnstileNonce}
+                      siteKey={turnstileSiteKey}
+                      action="login"
+                      onVerify={setTurnstileToken}
+                      onError={handleTurnstileError}
+                    />
+                  )}
+
+                  {formNotice && (
+                    <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
+                      {formNotice}
+                    </div>
+                  )}
+
+                  {(formError || error) && (
+                    <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      {formError ||
+                        (searchParams.get("code") === "account_banned"
+                          ? "此账号已被系统管理员封禁。"
+                          : error === "CredentialsSignin"
+                          ? "登录凭据无效，请重试。"
+                          : "登录过程中发生错误，请重试。")}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={
+                      isPending ||
+                      !twoFactorCode.trim() ||
+                      (requiresTurnstile && !turnstileToken)
+                    }
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-300 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        验证中...
+                      </>
+                    ) : (
+                      <>
+                        完成 2FA 登录
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+                )}
 
                 {registrationEnabled && (
                   <div className="mt-6 text-center">

@@ -1,11 +1,13 @@
 import { getAdminActor } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
+import { getBackupCodeDisplay } from "@/lib/two-factor";
 import {
   Ban,
   CheckCircle2,
   Edit3,
   ExternalLink,
   FileCode2,
+  KeyRound,
   Link2,
   ShieldAlert,
   ShieldCheck,
@@ -126,6 +128,8 @@ export default async function AdminUsersPage() {
       permManageSiteSettings: true,
       permManageAuthSettings: true,
       permRunMaintenance: true,
+      twoFactorEnabled: true,
+      twoFactorBackupCodes: true,
       createdAt: true,
       _count: {
         select: {
@@ -192,6 +196,9 @@ export default async function AdminUsersPage() {
               : null;
             const canMutateThisUser =
               actor.type === "SUPER_ADMIN" || user.role !== "ADMIN";
+            const backupCodeDisplay = getBackupCodeDisplay(
+              user.twoFactorBackupCodes
+            );
 
             return (
               <article
@@ -284,6 +291,46 @@ export default async function AdminUsersPage() {
                             : "无"}
                         </p>
                       </div>
+                    </div>
+
+                    <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.025] p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-white/78">
+                          <KeyRound className="h-4 w-4 text-emerald-200/70" />
+                          恢复码
+                        </div>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[11px] ${
+                            user.twoFactorEnabled
+                              ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-100"
+                              : "border-white/10 bg-white/[0.04] text-white/35"
+                          }`}
+                        >
+                          {user.twoFactorEnabled ? "2FA 已启用" : "未启用"}
+                        </span>
+                      </div>
+                      {user.twoFactorEnabled && backupCodeDisplay.length > 0 ? (
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                          {backupCodeDisplay.map((item, index) => (
+                            <code
+                              key={`${user.id}-${item.code ?? "legacy"}-${index}`}
+                              className={`rounded-lg border px-2.5 py-2 text-center text-[11px] ${
+                                item.usedAt
+                                  ? "border-white/10 bg-white/[0.03] text-white/30 line-through"
+                                  : "border-amber-300/20 bg-amber-400/10 text-amber-100"
+                              }`}
+                            >
+                              {item.code ?? "旧码不可见"}
+                            </code>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-white/35">
+                          {user.twoFactorEnabled
+                            ? "暂无恢复码，请让用户重新生成。"
+                            : "关闭 2FA 后恢复码会自动失效。"}
+                        </p>
+                      )}
                     </div>
 
                     <div className="mt-5 flex flex-wrap gap-2">

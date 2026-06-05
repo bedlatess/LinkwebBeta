@@ -19,8 +19,10 @@ function message(code: unknown) {
 
 export function AdminTwoFactorCard({
   initialEnabled,
+  initialBackupCodes = [],
 }: {
   initialEnabled: boolean;
+  initialBackupCodes?: { code: string | null; usedAt: string | null }[];
 }) {
   const [enabled, setEnabled] = useState(initialEnabled);
   const [loading, setLoading] = useState(false);
@@ -29,6 +31,7 @@ export function AdminTwoFactorCard({
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [manualSecret, setManualSecret] = useState("");
   const [code, setCode] = useState("");
+  const [disableMode, setDisableMode] = useState<"totp" | "recovery">("totp");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
 
   async function startSetup() {
@@ -89,15 +92,16 @@ export function AdminTwoFactorCard({
       const response = await fetch("/sys-admin/api/2fa/disable", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, mode: "totp" }),
+        body: JSON.stringify({ code, mode: disableMode }),
       });
       const data = await response.json().catch(() => null);
 
       if (!response.ok) throw new Error(message(data?.error));
       setEnabled(false);
       setCode("");
+      setDisableMode("totp");
       setBackupCodes([]);
-      setNotice("后台账号两步验证已关闭。");
+      setNotice("后台账号两步验证已关闭，原恢复码已自动失效。");
     } catch (error) {
       setError(error instanceof Error ? error.message : "两步验证关闭失败。");
     } finally {
@@ -219,20 +223,52 @@ export function AdminTwoFactorCard({
         <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 p-4">
           <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-white/50">
             <KeyRound className="h-3.5 w-3.5" />
-            当前 6 位验证码
+            关闭或重置前请先验证身份
           </label>
+          <div className="mb-3 grid grid-cols-2 rounded-xl border border-white/10 bg-slate-950/35 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setDisableMode("totp");
+                setCode("");
+                setError("");
+              }}
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                disableMode === "totp"
+                  ? "bg-emerald-300 text-slate-950"
+                  : "text-white/45 hover:text-white"
+              }`}
+            >
+              验证器动态码
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDisableMode("recovery");
+                setCode("");
+                setError("");
+              }}
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                disableMode === "recovery"
+                  ? "bg-emerald-300 text-slate-950"
+                  : "text-white/45 hover:text-white"
+              }`}
+            >
+              恢复码
+            </button>
+          </div>
           <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto]">
             <input
               value={code}
               onChange={(event) => setCode(event.target.value)}
-              inputMode="numeric"
-              placeholder="123456"
+              inputMode={disableMode === "totp" ? "numeric" : "text"}
+              placeholder={disableMode === "totp" ? "123456" : "ABCDE-12345"}
               className="w-full rounded-xl border border-white/10 bg-slate-950/35 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-emerald-400/60 focus:ring-2 focus:ring-emerald-400/10"
             />
             <button
               type="button"
               onClick={regenerateBackupCodes}
-              disabled={loading || !code.trim()}
+              disabled={loading || !code.trim() || disableMode !== "totp"}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white/65 transition hover:bg-white/[0.07] hover:text-white disabled:opacity-60"
             >
               <RefreshCw className="h-4 w-4" />
@@ -247,6 +283,31 @@ export function AdminTwoFactorCard({
               <X className="h-4 w-4" />
               关闭 2FA
             </button>
+          </div>
+        </div>
+      )}
+
+      {enabled && initialBackupCodes.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/35 p-4">
+          <p className="text-sm font-semibold text-white/82">
+            当前可查看的恢复码
+          </p>
+          <p className="mt-1 text-sm leading-6 text-white/42">
+            已使用的恢复码会标记为失效；旧版本生成且未加密保存的恢复码无法反查明文，请重置恢复码。
+          </p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            {initialBackupCodes.map((item, index) => (
+              <code
+                key={`${item.code ?? "legacy"}-${index}`}
+                className={`rounded-xl border px-3 py-2 text-center text-xs ${
+                  item.usedAt
+                    ? "border-white/10 bg-white/[0.03] text-white/30 line-through"
+                    : "border-emerald-300/15 bg-emerald-400/10 text-emerald-100"
+                }`}
+              >
+                {item.code ?? "旧码不可见"}
+              </code>
+            ))}
           </div>
         </div>
       )}

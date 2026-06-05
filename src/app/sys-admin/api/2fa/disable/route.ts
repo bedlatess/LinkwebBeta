@@ -2,6 +2,9 @@ import { getAdminActor } from "@/lib/admin-action-auth";
 import { prisma } from "@/lib/prisma";
 import {
   decryptTwoFactorSecret,
+  getTwoFactorCookieOptions,
+  TWO_FACTOR_COOKIE,
+  TWO_FACTOR_SETUP_COOKIE,
   verifyAndConsumeBackupCode,
   verifyTotpToken,
 } from "@/lib/two-factor";
@@ -85,5 +88,15 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json({ success: true });
+  const response = NextResponse.json({ success: true });
+  response.cookies.set(TWO_FACTOR_COOKIE, "", {
+    ...getTwoFactorCookieOptions(0),
+    maxAge: 0,
+  });
+  response.cookies.set(TWO_FACTOR_SETUP_COOKIE, "", {
+    ...getTwoFactorCookieOptions(0),
+    maxAge: 0,
+  });
+
+  return response;
 }

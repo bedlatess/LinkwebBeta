@@ -1,6 +1,7 @@
 import { getAdminActor } from "@/lib/admin-action-auth";
 import { getGlobalSiteSettings } from "@/lib/site-settings";
 import { prisma } from "@/lib/prisma";
+import { getBackupCodeDisplay } from "@/lib/two-factor";
 import {
   AlertTriangle,
   Bell,
@@ -142,11 +143,11 @@ export default async function AdminSettingsPage() {
     actor.type === "SUPER_ADMIN"
       ? await prisma.adminUser.findUnique({
           where: { id: actor.adminId },
-          select: { twoFactorEnabled: true },
+          select: { twoFactorEnabled: true, twoFactorBackupCodes: true },
         })
       : await prisma.user.findUnique({
           where: { id: actor.userId },
-          select: { twoFactorEnabled: true },
+          select: { twoFactorEnabled: true, twoFactorBackupCodes: true },
         });
 
   return (
@@ -426,6 +427,9 @@ export default async function AdminSettingsPage() {
 
       <AdminTwoFactorCard
         initialEnabled={adminTwoFactor?.twoFactorEnabled === true}
+        initialBackupCodes={getBackupCodeDisplay(
+          adminTwoFactor?.twoFactorBackupCodes
+        )}
       />
 
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">

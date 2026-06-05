@@ -12,7 +12,7 @@
 import { auth } from "@/lib/auth";
 import { verifyAdminSessionFromRequest } from "@/lib/admin-session";
 import { findMatchingIpBanRule, getClientIp } from "@/lib/ip-ban";
-import { verifyTwoFactorVerificationToken } from "@/lib/two-factor";
+import { verifyTwoFactorVerificationToken } from "@/lib/two-factor-tokens";
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -43,6 +43,7 @@ export default auth(async (req) => {
     pathname.startsWith("/sys-admin/api/login");
   const adminSession = await verifyAdminSessionFromRequest(req);
   const normalSessionUserId = req.auth?.user?.id;
+  const sessionTwoFactorVerifiedAt = req.auth?.user?.twoFactorVerifiedAt;
   let hasNormalAdminSession = false;
 
   if (normalSessionUserId) {
@@ -59,6 +60,14 @@ export default auth(async (req) => {
     }
   }
   const isAdminActorRequest = Boolean(adminSession || hasNormalAdminSession);
+
+  function hasSessionTwoFactorVerification(confirmedAt?: Date | null) {
+    return (
+      typeof sessionTwoFactorVerifiedAt === "number" &&
+      confirmedAt instanceof Date &&
+      sessionTwoFactorVerifiedAt >= confirmedAt.getTime()
+    );
+  }
 
   // ═══════════════════════════════════════════════════════════════
   //  Admin Guard (independent from regular Auth.js sessions)
@@ -110,14 +119,18 @@ export default auth(async (req) => {
       if (normalSessionUserId && hasNormalAdminSession) {
         const user = await getPrisma().user.findUnique({
           where: { id: normalSessionUserId },
-          select: { twoFactorEnabled: true },
+          select: { twoFactorEnabled: true, twoFactorConfirmedAt: true },
         });
         const twoFactorVerified = await verifyTwoFactorVerificationToken(req, {
           actorType: "user",
           actorId: normalSessionUserId,
         });
 
-        if (user?.twoFactorEnabled && !twoFactorVerified) {
+        if (
+          user?.twoFactorEnabled &&
+          !twoFactorVerified &&
+          !hasSessionTwoFactorVerification(user.twoFactorConfirmedAt)
+        ) {
           const twoFactorUrl = new URL("/auth/2fa", req.url);
           twoFactorUrl.searchParams.set("callbackUrl", pathname);
           return NextResponse.redirect(twoFactorUrl);
@@ -247,7 +260,11 @@ export default auth(async (req) => {
       try {
         const user = await getPrisma().user.findUnique({
           where: { id: userId },
-          select: { isBanned: true, twoFactorEnabled: true },
+          select: {
+            isBanned: true,
+            twoFactorEnabled: true,
+            twoFactorConfirmedAt: true,
+          },
         });
 
         if (user?.isBanned) {
@@ -257,6 +274,7 @@ export default auth(async (req) => {
         if (
           user?.twoFactorEnabled &&
           !isRegularTwoFactorRoute &&
+          !hasSessionTwoFactorVerification(user.twoFactorConfirmedAt) &&
           !(await verifyTwoFactorVerificationToken(req, {
             actorType: "user",
             actorId: userId,
@@ -288,7 +306,11 @@ export default auth(async (req) => {
       try {
         const user = await getPrisma().user.findUnique({
           where: { id: userId },
-          select: { isBanned: true, twoFactorEnabled: true },
+          select: {
+            isBanned: true,
+            twoFactorEnabled: true,
+            twoFactorConfirmedAt: true,
+          },
         });
 
         if (user?.isBanned) {
@@ -301,6 +323,7 @@ export default auth(async (req) => {
         if (
           user?.twoFactorEnabled &&
           !isRegularTwoFactorRoute &&
+          !hasSessionTwoFactorVerification(user.twoFactorConfirmedAt) &&
           !(await verifyTwoFactorVerificationToken(req, {
             actorType: "user",
             actorId: userId,
