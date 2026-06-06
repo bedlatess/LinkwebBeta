@@ -1,44 +1,38 @@
 # LinkWeb
 
-LinkWeb 是一个自托管 Link-in-bio 平台，基于 LittleLink 理念二次开发。它提供个人公开主页、链接管理、主题外观、头像上传、打赏入口、访问分析，以及面向站点运营的系统管理后台。
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=nextdotjs)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-149eca?style=flat-square&logo=react&logoColor=white)](https://react.dev/)
+[![Prisma](https://img.shields.io/badge/Prisma-SQLite-2d3748?style=flat-square&logo=prisma)](https://www.prisma.io/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ed?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 
-## 功能概览
+LinkWeb is a self-hosted Link-in-bio control plane for creators, teams, and small communities. It turns a simple public profile into a manageable platform with link editing, themes, analytics, custom domains, user governance, admin permissions, IP bans, maintenance mode, and TOTP two-factor authentication.
 
-- 个人公开主页：通过 `/:username` 展示头像、简介、链接列表和主题样式。
-- 链接管理：支持新增、编辑、删除、显示/隐藏、拖拽排序和分组。
-- 主题与自定义：支持背景、按钮样式、字体、自定义 CSS 和打赏配置。
-- 访问分析：记录链接点击数据，公开点击接口使用 IP 哈希保护隐私。
-- 自定义域名：根据访问 Host 自动匹配到对应用户公开主页。
-- 系统后台：固定入口 `/sys-admin`，支持用户治理、链接审查、全局设置、维护模式、IP 黑名单和权限控制。
-- 账号安全：普通用户、普通管理员、超级管理员均支持 TOTP 两步验证，不使用邮件或短信验证码。
+简体中文项目说明：LinkWeb 是一个基于 LittleLink 理念二次开发的自托管个人链接聚合平台，同时内置系统管理后台，适合个人部署、团队内部分发和二次开发。
 
-## 2FA 规则
+## Why LinkWeb
 
-LinkWeb 使用验证器 App 的 TOTP 动态码，兼容 Google Authenticator、Microsoft Authenticator、1Password、Bitwarden、Aegis 等工具。
-
-- 未开启 2FA 的账号：使用邮箱和密码登录。
-- 已开启 2FA 的账号：密码登录会被拒绝并提示使用 2FA 登录，不会创建会话。
-- 2FA 登录入口：输入邮箱和验证器动态码，也可以使用一次性恢复码。
-- 恢复码：启用或重置 2FA 时生成，每个恢复码只能使用一次。
-- 关闭 2FA：会清空密钥、验证状态和恢复码，旧恢复码立即失效。
-- 后台查看恢复码：超级管理员和有用户查看权限的普通管理员可以查看可解密保存的恢复码；旧版本仅哈希保存的恢复码会显示为“旧码不可见”，需要重新生成。
-
-## 技术栈
-
-| 模块 | 技术 |
+| Capability | What It Gives You |
 | --- | --- |
-| Framework | Next.js 16 App Router |
-| UI | React 19 |
-| Language | TypeScript |
-| Styling | Tailwind CSS v4 |
-| Database | Prisma + SQLite |
-| Auth | Auth.js / NextAuth.js v5 |
-| State | Zustand |
-| Drag & Drop | dnd-kit |
-| Charts | Recharts |
-| Icons | lucide-react |
+| Public profile pages | Clean `/:username` pages for links, profile copy, avatars, tips, and custom themes. |
+| Link operations | Create, edit, delete, hide, group, and drag-sort links from a private dashboard. |
+| Admin console | Manage users, permissions, content review, site settings, maintenance mode, and IP bans from `/sys-admin`. |
+| Security controls | TOTP 2FA for users and admins, encrypted recovery-code display, Turnstile support, and ban enforcement. |
+| Self-hosted data | SQLite, uploaded assets, and runtime state stay inside your own Docker volume. |
+| Production deployment | Multi-stage Docker build, Prisma migrations, runtime schema checks, and health checks are included. |
 
-## 本地启动
+## Screens And Routes
+
+| Area | Route |
+| --- | --- |
+| Home | `/` |
+| Public profile | `/:username` |
+| Sign in | `/auth/signin` |
+| User dashboard | `/dashboard` |
+| User settings | `/dashboard/settings` |
+| Admin console | `/sys-admin` |
+| Admin settings | `/sys-admin/settings` |
+
+## Quick Start
 
 ```bash
 npm install
@@ -47,19 +41,19 @@ npx prisma generate
 npm run dev
 ```
 
-默认访问：
+Open:
 
 ```text
 http://localhost:2222
 ```
 
-如果本机 `2222` 已被其他项目占用，可以临时使用其他端口：
+If port `2222` is already used:
 
 ```bash
 npx next dev -p 3333
 ```
 
-最低环境变量：
+Minimum `.env` values:
 
 ```env
 DATABASE_URL="file:./dev.db"
@@ -68,48 +62,59 @@ NEXTAUTH_SECRET="replace-with-a-secure-random-secret"
 TWO_FACTOR_ENCRYPTION_KEY="replace-with-a-secure-random-secret"
 ```
 
-生成密钥：
+Generate a strong secret:
 
 ```bash
 openssl rand -base64 32
 ```
 
-## 演示账号
+## Demo Account
 
 ```text
-普通演示账号：test@pawn.eu.org
-演示密码：test123
-演示主页：http://localhost:2222/test
+Email:    test@pawn.eu.org
+Password: test123
+Profile:  http://localhost:2222/test
 ```
 
-独立超级管理员不开放网页注册，需要通过 CLI 创建：
+Create an independent super admin from the CLI:
 
 ```bash
 npm run admin:create -- --email=admin@pawn.eu.org --name="PAWN"
 ```
 
-后台入口：
+Admin console:
 
 ```text
 http://localhost:2222/sys-admin
 ```
 
-## Docker 部署
+## Two-Factor Authentication
 
-使用 Docker Compose：
+LinkWeb uses TOTP authenticator apps. Email and SMS verification codes are intentionally not used.
+
+- Accounts without 2FA sign in with email and password.
+- Accounts with 2FA cannot sign in with password alone; the UI asks them to use the 2FA login path.
+- 2FA login supports email plus authenticator code, or email plus one-time recovery code.
+- Recovery codes are hashed for verification and encrypted for admin display.
+- Disabling 2FA clears the TOTP secret, verification state, and recovery codes immediately.
+- Super admins and authorized normal admins can view decryptable recovery codes from the admin console.
+
+Compatible apps include Google Authenticator, Microsoft Authenticator, 1Password, Bitwarden, Aegis, and other TOTP clients.
+
+## Docker Deployment
 
 ```bash
 docker compose up -d --build
 ```
 
-默认端口映射：
+Default port mapping:
 
 ```yaml
 ports:
   - "${PORT:-2222}:3000"
 ```
 
-容器启动时会执行：
+The production container runs the bootstrap flow on start:
 
 ```text
 npx prisma migrate deploy
@@ -117,38 +122,24 @@ node scripts/ensure-sqlite-schema.mjs
 node scripts/seed-admin.mjs
 ```
 
-上传文件与 SQLite 数据库持久化在 Docker 数据卷 `linkwebbeta_linkweb-data` 中。
+SQLite data and uploaded files are persisted in the Docker volume:
 
-## 本地提交到仓库
-
-```powershell
-cd D:\code\Linkweb
-git status
-git add README.md RUN_GUIDE.md .gitignore
-git commit -m "docs: update project guides"
-git push origin main
+```text
+linkwebbeta_linkweb-data
 ```
 
-如果要提交全部代码改动：
+## Server Update Flow
 
-```powershell
-git add .
-git commit -m "feat: describe your change"
-git push origin main
-```
-
-如果有不想提交的文件，不要使用 `git add .`，改用指定文件路径。
-
-## 服务器拉取部署
-
-登录服务器后执行：
+Recommended deployment flow with rollback space:
 
 ```bash
 cd /root/data/docker_data/LinkwebBeta
 
 mkdir -p /root/data/docker_data/backups
+old_commit=$(git rev-parse --short HEAD)
 stamp=$(date +%Y%m%d-%H%M%S)
-tar -czf /root/data/docker_data/backups/linkweb-data-$stamp.tar.gz \
+
+tar -czf /root/data/docker_data/backups/linkweb-data-$old_commit-$stamp.tar.gz \
   -C /var/lib/docker/volumes/linkwebbeta_linkweb-data/_data .
 
 git pull origin main
@@ -156,27 +147,59 @@ docker compose up -d --build
 docker compose ps
 docker compose exec -T linkweb npx prisma migrate status
 curl -fsS -o /tmp/linkweb-check.html -w "HTTP_STATUS=%{http_code}\n" http://127.0.0.1:2222/auth/signin
+
+cd /root/data/docker_data/backups
+ls -1t linkweb-data-*.tar.gz | tail -n +3 | xargs -r rm -f
 ```
 
-## 项目结构
+This keeps the two newest data backups, so a bad release does not leave you with only one rollback option.
+
+## Local Git Flow
+
+```powershell
+cd D:\code\Linkweb
+git status
+git add <files>
+git commit -m "describe your change"
+git push origin main
+```
+
+Use targeted `git add` commands when your workspace contains generated files or unrelated local changes.
+
+## Tech Stack
+
+| Layer | Stack |
+| --- | --- |
+| Framework | Next.js 16 App Router |
+| UI | React 19 |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| Database | Prisma + SQLite |
+| Authentication | Auth.js / NextAuth.js v5 |
+| State | Zustand |
+| Drag and drop | dnd-kit |
+| Charts | Recharts |
+| Icons | lucide-react |
+
+## Project Structure
 
 ```text
 src/
 ├─ app/
-│  ├─ [username]/           # 公开个人主页
-│  ├─ auth/                 # 登录、注册、2FA 页面
-│  ├─ dashboard/            # 普通用户控制台
-│  ├─ sys-admin/            # 系统管理后台
-│  ├─ api/                  # API Route Handlers
-│  └─ uploads/              # 上传文件读取路由
+│  ├─ [username]/           # Public profile pages
+│  ├─ auth/                 # Sign-in, registration, and 2FA pages
+│  ├─ dashboard/            # User dashboard
+│  ├─ sys-admin/            # System admin console
+│  ├─ api/                  # App Router route handlers
+│  └─ uploads/              # Uploaded asset read route
 ├─ lib/
-│  ├─ auth.ts               # Auth.js 配置
-│  ├─ two-factor.ts         # TOTP、二维码、恢复码逻辑
-│  ├─ two-factor-tokens.ts  # 2FA Cookie/JWT 轻量工具
-│  ├─ admin-session.ts      # 超级管理员 Session
-│  ├─ admin-action-auth.ts  # 后台操作鉴权
-│  ├─ prisma.ts             # Prisma Client
-│  └─ ip-ban.ts             # IP/CIDR 封禁逻辑
+│  ├─ auth.ts               # Auth.js configuration
+│  ├─ two-factor.ts         # TOTP, QR-Code, and recovery-code logic
+│  ├─ two-factor-tokens.ts  # Lightweight 2FA cookie/JWT helpers
+│  ├─ admin-session.ts      # Super-admin session handling
+│  ├─ admin-action-auth.ts  # Admin action authorization
+│  ├─ prisma.ts             # Prisma client
+│  └─ ip-ban.ts             # IP/CIDR ban matching
 └─ stores/
    └─ dashboard-store.ts
 
@@ -186,10 +209,14 @@ prisma/
 └─ migrations/
 ```
 
-## 安全说明
+## Security Notes
 
-- `.env`、`.env.production` 和本地数据库文件不进入 Git。
-- 公开点击接口不保存原始 IP，而是使用密钥加盐哈希。
-- 被封禁用户无法登录，公开主页会进入封禁提示页。
-- 普通管理员写操作会实时查询数据库权限，避免 JWT 权限延迟导致越权。
-- 2FA 恢复码以哈希用于校验，同时加密保存用于后台查看；关闭 2FA 会立即清空恢复码。
+- `.env`, `.env.production`, local databases, upload data, and generated artifacts are ignored by Git.
+- Public click tracking stores salted IP hashes instead of raw IP addresses.
+- Banned users cannot sign in and their public profiles are blocked.
+- Normal-admin write actions re-check database permissions at execution time.
+- 2FA recovery codes are one-time use and become invalid when 2FA is disabled.
+
+## More
+
+Operational commands and deployment notes live in [RUN_GUIDE.md](./RUN_GUIDE.md).
