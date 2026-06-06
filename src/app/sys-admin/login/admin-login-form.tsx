@@ -316,6 +316,16 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
           />
         </div>
 
+        {twoFactorTarget === "normal" && requiresTurnstile && (
+          <TurnstileWidget
+            key={turnstileNonce}
+            siteKey={turnstileSiteKey}
+            action="login"
+            onVerify={setTurnstileToken}
+            onError={handleTurnstileError}
+          />
+        )}
+
         {error && (
           <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
             {error}
@@ -324,7 +334,13 @@ export function AdminLoginForm({ turnstileSiteKey }: AdminLoginFormProps) {
 
         <button
           type="submit"
-          disabled={loading || !twoFactorCode.trim()}
+          disabled={
+            loading ||
+            !twoFactorCode.trim() ||
+            (twoFactorTarget === "normal" &&
+              requiresTurnstile &&
+              !turnstileToken)
+          }
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
